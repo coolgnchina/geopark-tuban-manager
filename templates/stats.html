@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}统计分析 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}统计分析{% endblock %}
+
+{% block content %}
+<!-- 概览卡片 -->
+<div class="row mb-4" id="overview-cards">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">总数</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-count">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">待整改</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="pending-count">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">整改中</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="in-progress-count">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">已销号</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="closed-count">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">超期</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="overdue-count">
+                            <span class="loading"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <!-- 问题类型分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">问题类型分布</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        图表类型
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('problemType', 'pie')">饼图</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('problemType', 'bar')">柱状图</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('problemType', 'doughnut')">环形图</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="problemTypeChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 整改进展统计 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">整改进展</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="rectifyProgressChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 月度趋势 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">月度趋势</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyTrendChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 影响程度分析 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">影响程度分析</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="impactChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 地质公园排名 -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">地质公园统计排名</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="parkRankingTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>排名</th>
+                                <th>地质公园</th>
+                                <th>总数</th>
+                                <th>待整改</th>
+                                <th>整改中</th>
+                                <th>已销号</th>
+                                <th>完成率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="parkRankingBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <span class="loading"></span> 加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 超期预警列表 -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-danger">⚠️ 超期预警列表</h6>
+                <span class="badge bg-danger rounded-pill" id="overdue-count-badge">0</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="overdueTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>图斑编号</th>
+                                <th>地质公园</th>
+                                <th>设施名称</th>
+                                <th>问题类型</th>
+                                <th>整改期限</th>
+                                <th>超期天数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overdueBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <span class="loading"></span> 加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 图表配置
+    const chartColors = {
+        primary: '#2E8B57',
+        warning: '#ffc107',
+        danger: '#dc3545',
+        info: '#17a2b8',
+        success: '#28a745',
+        secondary: '#6c757d'
+    };
+
+    let charts = {};
+
+    // 加载概览数据
+    function loadOverview() {
+        fetch('{{ url_for("stats.api_overview") }}')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-count').textContent = data.total_count;
+                document.getElementById('pending-count').textContent = data.pending_count;
+                document.getElementById('in-progress-count').textContent = data.in_progress_count;
+                document.getElementById('closed-count').textContent = data.closed_count;
+                document.getElementById('overdue-count').textContent = data.overdue_count;
+                document.getElementById('overdue-count-badge').textContent = data.overdue_count;
+            });
+    }
+
+    // 加载问题类型图表
+    function loadProblemTypeChart(type = 'pie') {
+        fetch('{{ url_for("stats.api_problem_types") }}')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('problemTypeChart').getContext('2d');
+
+                if (charts.problemType) {
+                    charts.problemType.destroy();
+                }
+
+                charts.problemType = new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{
+                            data: data.map(d => d.value),
+                            backgroundColor: [
+                                chartColors.danger,
+                                chartColors.warning,
+                                chartColors.info,
+                                chartColors.success,
+                                chartColors.primary,
+                                chartColors.secondary
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    // 加载整改进展图表
+    function loadRectifyProgressChart() {
+        fetch('{{ url_for("stats.api_rectify_progress") }}')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('rectifyProgressChart').getContext('2d');
+
+                charts.rectifyProgress = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(d => d.name),
+                        datasets: [{
+                            data: data.map(d => d.value),
+                            backgroundColor: [
+                                chartColors.danger,
+                                chartColors.warning,
+                                chartColors.success
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    // 加载月度趋势图表
+    function loadMonthlyTrendChart() {
+        fetch('{{ url_for("stats.api_monthly_trend") }}')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+
+                charts.monthlyTrend = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.months,
+                        datasets: [{
+                            label: '发现问题',
+                            data: data.discovered,
+                            borderColor: chartColors.danger,
+                            backgroundColor: chartColors.danger + '20',
+                            tension: 0.1
+                        }, {
+                            label: '完成整改',
+                            data: data.closed,
+                            borderColor: chartColors.success,
+                            backgroundColor: chartColors.success + '20',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    // 加载影响程度图表
+    function loadImpactChart() {
+        fetch('{{ url_for("stats.api_impact_analysis") }}')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('impactChart').getContext('2d');
+
+                charts.impact = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.impact_level),
+                        datasets: [{
+                            label: '数量',
+                            data: data.map(d => d.count),
+                            backgroundColor: [
+                                chartColors.danger,
+                                chartColors.warning,
+                                chartColors.info
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    // 加载地质公园排名
+    function loadParkRanking() {
+        fetch('{{ url_for("stats.api_park_ranking") }}')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('parkRankingBody');
+                tbody.innerHTML = '';
+
+                data.sort((a, b) => b.total_count - a.total_count);
+
+                data.forEach((park, index) => {
+                    const completionRate = park.total_count > 0
+                        ? Math.round((park.closed_count / park.total_count) * 100)
+                        : 0;
+
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${park.park_name}</td>
+                            <td>${park.total_count}</td>
+                            <td>
+                                <span class="badge bg-danger">${park.pending_count}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">${park.in_progress_count}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">${park.closed_count}</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         style="width: ${completionRate}%">
+                                        ${completionRate}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
+    }
+
+    // 加载超期预警列表
+    function loadOverdueList() {
+        fetch('{{ url_for("stats.api_overdue_list") }}')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('overdueBody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">暂无超期图斑</td></tr>';
+                    return;
+                }
+
+                data.forEach(tuban => {
+                    const row = `
+                        <tr>
+                            <td><a href="/tuban/detail/${tuban.id}" class="text-decoration-none">${tuban.tuban_code}</a></td>
+                            <td>${tuban.park_name}</td>
+                            <td>${tuban.facility_name}</td>
+                            <td>${tuban.problem_type}</td>
+                            <td>${tuban.rectify_deadline}</td>
+                            <td><span class="badge bg-danger">${tuban.overdue_days}天</span></td>
+                            <td>
+                                <a href="/tuban/detail/${tuban.id}" class="btn btn-sm btn-outline-primary">查看</a>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
+    }
+
+    // 切换图表类型
+    function changeChartType(chartName, type) {
+        if (chartName === 'problemType') {
+            loadProblemTypeChart(type);
+        }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOverview();
+        loadProblemTypeChart();
+        loadRectifyProgressChart();
+        loadMonthlyTrendChart();
+        loadImpactChart();
+        loadParkRanking();
+        loadOverdueList();
+
+        // 每30秒刷新一次概览数据
+        setInterval(loadOverview, 30000);
+    });
+</script>
+{% endblock %}"}

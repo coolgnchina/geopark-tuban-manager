@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}首页概览 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}首页概览{% endblock %}
+
+{% block content %}
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">图斑总数</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-geo-alt-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">待整改</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">整改中</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ in_progress_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-arrow-repeat fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">已销号</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ closed_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域 -->
+<div class="row">
+    <!-- 问题类型分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">问题类型分布</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="problemTypeChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能区分布 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">功能区分布</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="zoneChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预警信息 -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-danger">⚠️ 超期预警</h6>
+                <span class="badge bg-danger rounded-pill">{{ overdue_count }}</span>
+            </div>
+            <div class="card-body">
+                {% if overdue_count > 0 %}
+                    <p class="text-danger">有 {{ overdue_count }} 个图斑整改已超期，请尽快处理！</p>
+                    <a href="{{ url_for('tuban.list', rectify_status='未整改') }}" class="btn btn-sm btn-danger">查看详情</a>
+                {% else %}
+                    <p class="text-muted">暂无超期图斑</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-warning">📅 本周待办</h6>
+                <span class="badge bg-warning rounded-pill">{{ week_todo }}</span>
+            </div>
+            <div class="card-body">
+                {% if week_todo > 0 %}
+                    <p class="text-warning">本周有 {{ week_todo }} 个图斑需要完成整改。</p>
+                    <a href="{{ url_for('tuban.list') }}" class="btn btn-sm btn-warning">查看详情</a>
+                {% else %}
+                    <p class="text-muted">本周暂无待办事项</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 问题类型分布饼图
+    const problemCtx = document.getElementById('problemTypeChart').getContext('2d');
+    new Chart(problemCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for stat in problem_stats %}'{{ stat.problem_type }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for stat in problem_stats %}{{ stat.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // 功能区分布柱状图
+    const zoneCtx = document.getElementById('zoneChart').getContext('2d');
+    new Chart(zoneCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for stat in zone_stats %}'{{ stat.func_zone }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: '图斑数量',
+                data: [{% for stat in zone_stats %}{{ stat.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: '#2E8B57',
+                borderColor: '#228B22',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

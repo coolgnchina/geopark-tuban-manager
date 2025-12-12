@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}字典管理 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}字典管理{% endblock %}
+
+{% block content %}
+<!-- 字典类型选择 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    {% for type in dict_types %}
+                        <a href="{{ url_for('system.dictionaries', type=type) }}"
+                           class="btn btn-outline-primary {% if type == current_type %}active{% endif %}">{{ type }}</a>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addModal">
+                    <i class="bi bi-plus-circle"></i> 添加字典项
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 字典项列表 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="60">序号</th>
+                                <th>编码</th>
+                                <th>显示值</th>
+                                <th width="100">排序</th>
+                                <th width="150">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><code>{{ item.dict_code }}</code></td>
+                                    <td>{{ item.dict_value }}</td>
+                                    <td>{{ item.sort_order }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                                onclick="editItem({{ item.id }}, '{{ item.dict_code }}', '{{ item.dict_value }}', {{ item.sort_order }})"
+                                                title="编辑">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                                                <form method="POST" action="{{ url_for('system.delete_dictionary', id=item.id) }}"
+                                              style="display: inline-block;" onsubmit="return confirm('确定要删除吗？')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    title="删除">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">暂无数据</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    <table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 模态框需要放在content块之外，但在body标签内 -->
+{% block modals %}
+<!-- 添加字典项模态框 -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('system.add_dictionary') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加字典项</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="dict_type" value="{{ current_type }}">
+                    <div class="mb-3">
+                        <label for="dict_code" class="form-label">编码 *</label>
+                        <input type="text" class="form-control" id="dict_code" name="dict_code" required>
+                        <div class="form-text">用于程序识别的唯一编码</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dict_value" class="form-label">显示值 *</label>
+                        <input type="text" class="form-control" id="dict_value" name="dict_value" required>
+                        <div class="form-text">在前端界面显示的文字</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sort_order" class="form-label">排序</label>
+                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="0">
+                        <div class="form-text">数字越小排序越靠前</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑字典项模态框 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editForm" action="{{ url_for('system.edit_dictionary', id=0) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑字典项</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="mb-3">
+                        <label for="edit_dict_code" class="form-label">编码 *</label>
+                        <input type="text" class="form-control" id="edit_dict_code" name="dict_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_dict_value" class="form-label">显示值 *</label>
+                        <input type="text" class="form-control" id="edit_dict_value" name="dict_value" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_sort_order" class="form-label">排序</label>
+                        <input type="number" class="form-control" id="edit_sort_order" name="sort_order" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 编辑字典项
+    function editItem(id, code, value, sortOrder) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_dict_code').value = code;
+        document.getElementById('edit_dict_value').value = value;
+        document.getElementById('edit_sort_order').value = sortOrder;
+
+        // 更新表单的action
+        const form = document.getElementById('editForm');
+        form.action = `/system/dictionaries/edit/${id}`;
+
+        const modal = new bootstrap.Modal(document.getElementById('editModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}"}

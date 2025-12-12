@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '编辑图斑' if action == 'edit' else '新增图斑' }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}{{ '编辑图斑' if action == 'edit' else '新增图斑' }}{% endblock %}
+
+{% block content %}
+<form method="POST" class="needs-validation" novalidate>
+    <div class="row">
+        <!-- 基础信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">基础信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="tuban_code" class="form-label">图斑编号 *</label>
+                            <input type="text" class="form-control" id="tuban_code" name="tuban_code"
+                                   value="{{ tuban.tuban_code if tuban else '' }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="park_name" class="form-label">所属地质公园 *</label>
+                            <input type="text" class="form-control" id="park_name" name="park_name"
+                                   value="{{ tuban.park_name if tuban else '' }}" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="func_zone" class="form-label">所在功能区</label>
+                            <select class="form-select" id="func_zone" name="func_zone">
+                                <option value="">请选择...</option>
+                                <option value="核心区" {% if tuban and tuban.func_zone == '核心区' %}selected{% endif %}>核心区</option>
+                                <option value="缓冲区" {% if tuban and tuban.func_zone == '缓冲区' %}selected{% endif %}>缓冲区</option>
+                                <option value="实验区" {% if tuban and tuban.func_zone == '实验区' %}selected{% endif %}>实验区</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="facility_name" class="form-label">活动/设施名称</label>
+                            <input type="text" class="form-control" id="facility_name" name="facility_name"
+                                   value="{{ tuban.facility_name if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="longitude" class="form-label">经度</label>
+                            <input type="number" class="form-control" id="longitude" name="longitude" step="0.000001"
+                                   value="{{ tuban.longitude if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="latitude" class="form-label">纬度</label>
+                            <input type="number" class="form-control" id="latitude" name="latitude" step="0.000001"
+                                   value="{{ tuban.latitude if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="area" class="form-label">占地面积 (平方米)</label>
+                            <input type="number" class="form-control" id="area" name="area" step="0.01"
+                                   value="{{ tuban.area if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="image_date" class="form-label">影像时相</label>
+                            <input type="date" class="form-control" id="image_date" name="image_date"
+                                   value="{{ tuban.image_date.isoformat() if tuban and tuban.image_date else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 建设主体信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">建设主体信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="build_unit" class="form-label">建设单位</label>
+                            <input type="text" class="form-control" id="build_unit" name="build_unit"
+                                   value="{{ tuban.build_unit if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="build_time" class="form-label">建设时间</label>
+                            <input type="date" class="form-control" id="build_time" name="build_time"
+                                   value="{{ tuban.build_time.isoformat() if tuban and tuban.build_time else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="has_approval" class="form-label">是否有审批手续</label>
+                            <select class="form-select" id="has_approval" name="has_approval">
+                                <option value="">请选择...</option>
+                                <option value="是" {% if tuban and tuban.has_approval == '是' %}selected{% endif %}>是</option>
+                                <option value="否" {% if tuban and tuban.has_approval == '否' %}selected{% endif %}>否</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="approval_no_group" style="{% if not tuban or tuban.has_approval != '是' %}display: none;{% endif %}">
+                            <label for="approval_no" class="form-label">审批文号</label>
+                            <input type="text" class="form-control" id="approval_no" name="approval_no"
+                                   value="{{ tuban.approval_no if tuban else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发现与核查信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">发现与核查信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="discover_time" class="form-label">发现时间</label>
+                            <input type="date" class="form-control" id="discover_time" name="discover_time"
+                                   value="{{ tuban.discover_time.isoformat() if tuban and tuban.discover_time else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="discover_method" class="form-label">发现方式</label>
+                            <select class="form-select" id="discover_method" name="discover_method">
+                                <option value="">请选择...</option>
+                                <option value="遥感监测" {% if tuban and tuban.discover_method == '遥感监测' %}selected{% endif %}>遥感监测</option>
+                                <option value="日常巡查" {% if tuban and tuban.discover_method == '日常巡查' %}selected{% endif %}>日常巡查</option>
+                                <option value="群众举报" {% if tuban and tuban.discover_method == '群众举报' %}selected{% endif %}>群众举报</option>
+                                <option value="上级交办" {% if tuban and tuban.discover_method == '上级交办' %}selected{% endif %}>上级交办</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="check_time" class="form-label">现场核查时间</label>
+                            <input type="date" class="form-control" id="check_time" name="check_time"
+                                   value="{{ tuban.check_time.isoformat() if tuban and tuban.check_time else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="check_person" class="form-label">核查人员</label>
+                            <input type="text" class="form-control" id="check_person" name="check_person"
+                                   value="{{ tuban.check_person if tuban else '' }}">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="check_result" class="form-label">核查结论</label>
+                            <textarea class="form-control" id="check_result" name="check_result" rows="2">{{ tuban.check_result if tuban else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 问题与违法信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">问题与违法信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="problem_type" class="form-label">问题类型</label>
+                            <select class="form-select" id="problem_type" name="problem_type">
+                                <option value="">请选择...</option>
+                                <option value="违规建设" {% if tuban and tuban.problem_type == '违规建设' %}selected{% endif %}>违规建设</option>
+                                <option value="采矿" {% if tuban and tuban.problem_type == '采矿' %}selected{% endif %}>采矿</option>
+                                <option value="开垦" {% if tuban and tuban.problem_type == '开垦' %}selected{% endif %}>开垦</option>
+                                <option value="污染" {% if tuban and tuban.problem_type == '污染' %}selected{% endif %}>污染</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="impact_level" class="form-label">影响程度</label>
+                            <select class="form-select" id="impact_level" name="impact_level">
+                                <option value="">请选择...</option>
+                                <option value="严重" {% if tuban and tuban.impact_level == '严重' %}selected{% endif %}>严重</option>
+                                <option value="一般" {% if tuban and tuban.impact_level == '一般' %}selected{% endif %}>一般</option>
+                                <option value="轻微" {% if tuban and tuban.impact_level == '轻微' %}selected{% endif %}>轻微</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="is_illegal" class="form-label">是否违法违规</label>
+                            <select class="form-select" id="is_illegal" name="is_illegal">
+                                <option value="">请选择...</option>
+                                <option value="是" {% if tuban and tuban.is_illegal == '是' %}selected{% endif %}>是</option>
+                                <option value="否" {% if tuban and tuban.is_illegal == '否' %}selected{% endif %}>否</option>
+                                <option value="待定" {% if tuban and tuban.is_illegal == '待定' %}selected{% endif %}>待定</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="geo_heritage_type" class="form-label">涉及地质遗迹类型</label>
+                            <input type="text" class="form-control" id="geo_heritage_type" name="geo_heritage_type"
+                                   value="{{ tuban.geo_heritage_type if tuban else '' }}"
+                                   placeholder="如：地层、构造、古生物化石">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="problem_desc" class="form-label">问题描述</label>
+                            <textarea class="form-control" id="problem_desc" name="problem_desc" rows="3">{{ tuban.problem_desc if tuban else '' }}</textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="violated_law" class="form-label">违反法规条款</label>
+                            <textarea class="form-control" id="violated_law" name="violated_law" rows="2">{{ tuban.violated_law if tuban else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 整改信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">整改信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="rectify_measure" class="form-label">整改措施</label>
+                            <textarea class="form-control" id="rectify_measure" name="rectify_measure" rows="2">{{ tuban.rectify_measure if tuban else '' }}</textarea>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="rectify_deadline" class="form-label">整改时限</label>
+                            <input type="date" class="form-control" id="rectify_deadline" name="rectify_deadline"
+                                   value="{{ tuban.rectify_deadline.isoformat() if tuban and tuban.rectify_deadline else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="rectify_status" class="form-label">整改进展</label>
+                            <select class="form-select" id="rectify_status" name="rectify_status">
+                                <option value="未整改" {% if not tuban or tuban.rectify_status == '未整改' %}selected{% endif %}>未整改</option>
+                                <option value="整改中" {% if tuban and tuban.rectify_status == '整改中' %}selected{% endif %}>整改中</option>
+                                <option value="已整改" {% if tuban and tuban.rectify_status == '已整改' %}selected{% endif %}>已整改</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="rectify_verify_time" class="form-label">整改验收时间</label>
+                            <input type="date" class="form-control" id="rectify_verify_time" name="rectify_verify_time"
+                                   value="{{ tuban.rectify_verify_time.isoformat() if tuban and tuban.rectify_verify_time else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="verify_person" class="form-label">验收人员</label>
+                            <input type="text" class="form-control" id="verify_person" name="verify_person"
+                                   value="{{ tuban.verify_person if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="is_closed" class="form-label">是否销号</label>
+                            <select class="form-select" id="is_closed" name="is_closed">
+                                <option value="否" {% if not tuban or tuban.is_closed == '否' %}selected{% endif %}>否</option>
+                                <option value="是" {% if tuban and tuban.is_closed == '是' %}selected{% endif %}>是</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 处罚信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">处罚信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="is_punished" class="form-label">是否处罚</label>
+                            <select class="form-select" id="is_punished" name="is_punished">
+                                <option value="">请选择...</option>
+                                <option value="是" {% if tuban and tuban.is_punished == '是' %}selected{% endif %}>是</option>
+                                <option value="否" {% if tuban and tuban.is_punished == '否' %}selected{% endif %}>否</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3 punish-field" style="{% if not tuban or tuban.is_punished != '是' %}display: none;{% endif %}">
+                            <label for="punish_type" class="form-label">处罚形式</label>
+                            <input type="text" class="form-control" id="punish_type" name="punish_type"
+                                   value="{{ tuban.punish_type if tuban else '' }}"
+                                   placeholder="如：罚款、责令停工、行政拘留">
+                        </div>
+                        <div class="col-md-3 mb-3 punish-field" style="{% if not tuban or tuban.is_punished != '是' %}display: none;{% endif %}">
+                            <label for="fine_amount" class="form-label">罚款金额 (万元)</label>
+                            <input type="number" class="form-control" id="fine_amount" name="fine_amount" step="0.01"
+                                   value="{{ tuban.fine_amount if tuban else '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3 punish-field" style="{% if not tuban or tuban.is_punished != '是' %}display: none;{% endif %}">
+                            <label for="punish_doc_no" class="form-label">处罚文书编号</label>
+                            <input type="text" class="form-control" id="punish_doc_no" name="punish_doc_no"
+                                   value="{{ tuban.punish_doc_no if tuban else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理信息 -->
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">管理信息</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="data_source" class="form-label">台账来源</label>
+                            <input type="text" class="form-control" id="data_source" name="data_source"
+                                   value="{{ tuban.data_source if tuban else '' }}"
+                                   placeholder="如：遥感监测台账、巡查台账">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="is_patrol_point" class="form-label">是否为巡查点</label>
+                            <select class="form-select" id="is_patrol_point" name="is_patrol_point">
+                                <option value="否" {% if not tuban or tuban.is_patrol_point == '否' %}selected{% endif %}>否</option>
+                                <option value="是" {% if tuban and tuban.is_patrol_point == '是' %}selected{% endif %}>是</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="responsible_dept" class="form-label">责任部门/责任人</label>
+                            <input type="text" class="form-control" id="responsible_dept" name="responsible_dept"
+                                   value="{{ tuban.responsible_dept if tuban else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="attachments" class="form-label">附件材料</label>
+                            <input type="text" class="form-control" id="attachments" name="attachments"
+                                   value="{{ tuban.attachments if tuban else '' }}"
+                                   placeholder="文件路径或链接">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="remark" class="form-label">备注</label>
+                            <input type="text" class="form-control" id="remark" name="remark"
+                                   value="{{ tuban.remark if tuban else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="col-12 mb-4">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('tuban.list') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> 返回列表
+                </a>
+                <div>
+                    <button type="reset" class="btn btn-outline-secondary">重置</button>
+                    <button type="submit" class="btn btn-primary ms-2">
+                        <i class="bi bi-save"></i> {{ '保存修改' if action == 'edit' else '创建图斑' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 表单验证
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+
+    // 显示/隐藏审批文号输入框
+    document.getElementById('has_approval').addEventListener('change', function() {
+        const approvalGroup = document.getElementById('approval_no_group');
+        if (this.value === '是') {
+            approvalGroup.style.display = 'block';
+            document.getElementById('approval_no').setAttribute('required', 'required');
+        } else {
+            approvalGroup.style.display = 'none';
+            document.getElementById('approval_no').removeAttribute('required');
+        }
+    });
+
+    // 显示/隐藏处罚相关字段
+    document.getElementById('is_punished').addEventListener('change', function() {
+        const punishFields = document.querySelectorAll('.punish-field');
+        if (this.value === '是') {
+            punishFields.forEach(field => field.style.display = 'block');
+        } else {
+            punishFields.forEach(field => field.style.display = 'none');
+        }
+    });
+
+    // 整改进展变更时自动设置销号状态
+    document.getElementById('rectify_status').addEventListener('change', function() {
+        if (this.value === '已整改') {
+            document.getElementById('is_closed').value = '是';
+        } else {
+            document.getElementById('is_closed').value = '否';
+        }
+    });
+</script>
+{% endblock %}

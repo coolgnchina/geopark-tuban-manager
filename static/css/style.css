@@ -1,0 +1,303 @@
+/* 地质公园管理系统样式 */
+
+:root {
+    --geopark-green: #2E8B57;
+    --geopark-green-light: #3CB371;
+    --geopark-green-dark: #228B22;
+    --sidebar-width: 250px;
+}
+
+/* 基础样式 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+}
+
+/* 侧边栏样式 */
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -var(--sidebar-width);
+    width: var(--sidebar-width);
+    transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 0.875rem 1.25rem;
+    font-size: 1.2rem;
+}
+
+#sidebar-wrapper .list-group {
+    width: var(--sidebar-width);
+}
+
+#sidebar-wrapper .list-group-item {
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background-color: var(--geopark-green);
+    color: #fff;
+}
+
+/* 主内容区域 */
+#page-content-wrapper {
+    min-width: 100vw;
+    margin-left: 0;
+    transition: margin 0.25s ease-out;
+}
+
+/* 侧边栏切换状态 */
+body.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+body.toggled #page-content-wrapper {
+    margin-left: var(--sidebar-width);
+}
+
+/* 响应式调整 */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+
+    #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+        margin-left: var(--sidebar-width);
+    }
+
+    body.toggled #sidebar-wrapper {
+        margin-left: -var(--sidebar-width);
+    }
+
+    body.toggled #page-content-wrapper {
+        margin-left: 0;
+    }
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: var(--geopark-green);
+    border-color: var(--geopark-green);
+}
+
+.btn-primary:hover {
+    background-color: var(--geopark-green-dark);
+    border-color: var(--geopark-green-dark);
+}
+
+.btn-outline-primary {
+    color: var(--geopark-green);
+    border-color: var(--geopark-green);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--geopark-green);
+    border-color: var(--geopark-green);
+}
+
+/* 表格样式 */
+.table-hover tbody tr:hover {
+    background-color: rgba(46, 139, 87, 0.1);
+}
+
+.table-light {
+    background-color: #f8f9fc;
+}
+
+/* 状态徽章 */
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+/* 表单样式 */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--geopark-green);
+    box-shadow: 0 0 0 0.2rem rgba(46, 139, 87, 0.25);
+}
+
+/* 分页样式 */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    color: var(--geopark-green);
+}
+
+.page-item.active .page-link {
+    background-color: var(--geopark-green);
+    border-color: var(--geopark-green);
+}
+
+/* 统计卡片 */
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+/* 详情页样式 */
+.detail-section {
+    background-color: #f8f9fc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-section h5 {
+    color: var(--geopark-green);
+    border-bottom: 2px solid var(--geopark-green);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    margin-bottom: 15px;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    color: #333;
+}
+
+/* 时间线样式 */
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e3e6f0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    margin-bottom: 30px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: var(--geopark-green);
+}
+
+.timeline-item.warning::before {
+    background-color: #ffc107;
+}
+
+.timeline-item.danger::before {
+    background-color: #dc3545;
+}
+
+.timeline-content {
+    background-color: #fff;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.timeline-time {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 5px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .btn-group-sm > .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(46, 139, 87, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--geopark-green);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--geopark-green);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--geopark-green-dark);
+}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}图斑管理 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}图斑管理{% endblock %}
+
+{% block content %}
+<!-- 工具栏 -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">关键词搜索</label>
+                <input type="text" class="form-control" name="search" value="{{ search_keyword }}"
+                       placeholder="图斑编号、设施名称、建设单位...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">地质公园</label>
+                <select class="form-select" name="park_name">
+                    <option value="">全部</option>
+                    {% for park in park_names %}
+                        <option value="{{ park.park_name }}" {% if park_name == park.park_name %}selected{% endif %}>{{ park.park_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">问题类型</label>
+                <select class="form-select" name="problem_type">
+                    <option value="">全部</option>
+                    {% for type in problem_types %}
+                        <option value="{{ type.problem_type }}" {% if problem_type == type.problem_type %}selected{% endif %}>{{ type.problem_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">整改进展</label>
+                <select class="form-select" name="rectify_status">
+                    <option value="">全部</option>
+                    {% for status in rectify_statuses %}
+                        <option value="{{ status.rectify_status }}" {% if rectify_status == status.rectify_status %}selected{% endif %}>{{ status.rectify_status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">功能区</label>
+                <select class="form-select" name="func_zone">
+                    <option value="">全部</option>
+                    {% for zone in func_zones %}
+                        <option value="{{ zone.func_zone }}" {% if func_zone == zone.func_zone %}selected{% endif %}>{{ zone.func_zone }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+                <a href="{{ url_for('tuban.list') }}" class="btn btn-secondary">重置</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 操作按钮 -->
+<div class="d-flex justify-content-between mb-3">
+    <div>
+        <a href="{{ url_for('tuban.add') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> 新增图斑
+        </a>
+        <!-- Excel导入模态框触发按钮 -->
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-upload"></i> Excel导入
+        </button>
+    </div>
+    <a href="{{ url_for('tuban.export_excel', **request.args) }}" class="btn btn-outline-primary">
+        <i class="bi bi-download"></i> 导出Excel
+    </a>
+</div>
+
+<!-- 图斑列表 -->
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th width="80">序号</th>
+                        <th>图斑编号</th>
+                        <th>地质公园</th>
+                        <th>活动/设施名称</th>
+                        <th>问题类型</th>
+                        <th>影响程度</th>
+                        <th>整改进展</th>
+                        <th>整改期限</th>
+                        <th width="150">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tuban in pagination.items %}
+                        <tr>
+                            <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
+                            <td>
+                                <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="text-decoration-none">
+                                    {{ tuban.tuban_code }}
+                                </a>
+                            </td>
+                            <td>{{ tuban.park_name }}</td>
+                            <td>{{ tuban.facility_name }}</td>
+                            <td>{{ tuban.problem_type }}</td>
+                            <td>
+                                <span class="badge bg-{{ get_status_color(tuban.impact_level) }}">{{ tuban.impact_level }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ get_status_color(tuban.rectify_status) }}">{{ tuban.rectify_status }}</span>
+                            </td>
+                            <td>
+                                {% if tuban.rectify_deadline %}
+                                    {% set today = get_current_date() %}
+                                    {% set is_overdue = tuban.rectify_deadline < today and tuban.rectify_status in ['未整改', '整改中'] %}
+                                    <span class="{% if is_overdue %}text-danger fw-bold{% endif %}">
+                                        {{ format_date(tuban.rectify_deadline) }}
+                                        {% if is_overdue %} (已超期){% endif %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="btn btn-outline-primary" title="查看">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('tuban.edit', id=tuban.id) }}" class="btn btn-outline-warning" title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="删除"
+                                            onclick="if(confirmDelete()) location.href='{{ url_for('tuban.delete', id=tuban.id) }}'">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        {% if pagination.pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('tuban.list', page=pagination.prev_num, **request.args) }}">上一页</a>
+                    </li>
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('tuban.list', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('tuban.list', page=pagination.next_num, **request.args) }}">下一页</a>
+                    </li>
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Excel导入模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Excel导入</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('tuban.import_excel') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">选择Excel文件</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                        <div class="form-text">支持 .xlsx 和 .xls 格式，最大16MB</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>提示：请确保Excel文件格式正确，包含必要的字段信息。</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">导入</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
