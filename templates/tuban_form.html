@@ -21,7 +21,7 @@
                                    value="{{ tuban.tuban_code if tuban else '' }}" required>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <label for="park_name" class="form-label">所属地质公园 *</label>
+                            <label for="park_name" class="form-label">项目名称 *</label>
                             <input type="text" class="form-control" id="park_name" name="park_name"
                                    value="{{ tuban.park_name if tuban else '' }}" required>
                         </div>
@@ -29,9 +29,9 @@
                             <label for="func_zone" class="form-label">所在功能区</label>
                             <select class="form-select" id="func_zone" name="func_zone">
                                 <option value="">请选择...</option>
-                                <option value="核心区" {% if tuban and tuban.func_zone == '核心区' %}selected{% endif %}>核心区</option>
-                                <option value="缓冲区" {% if tuban and tuban.func_zone == '缓冲区' %}selected{% endif %}>缓冲区</option>
-                                <option value="实验区" {% if tuban and tuban.func_zone == '实验区' %}selected{% endif %}>实验区</option>
+                                {% for func_zone_item in func_zones %}
+                                <option value="{{ func_zone_item.dict_value }}" {% if tuban and tuban.func_zone == func_zone_item.dict_value %}selected{% endif %}>{{ func_zone_item.dict_value }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">

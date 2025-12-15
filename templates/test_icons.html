@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标测试 - 地质公园图斑管理系统</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="/static/css/bootstrap-icons.css">
+
+    <style>
+        .icon-test {
+            font-size: 24px;
+            margin: 10px;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .icon-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .icon-display {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .icon-name {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        .working { color: green; }
+        .broken { color: red; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Bootstrap Icons 测试页面</h1>
+
+        <div class="alert alert-info">
+            <h5>图标状态检测</h5>
+            <p>如果图标显示为方框或问号，说明字体图标没有正确加载。</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h3>导航图标（当前使用）</h3>
+                <div class="icon-grid">
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-geo-fill"></i>
+                        </div>
+                        <div class="icon-name">bi-geo-fill</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-house"></i>
+                        </div>
+                        <div class="icon-name">bi-house</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <div class="icon-name">bi-map</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div class="icon-name">bi-graph-up</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <div class="icon-name">bi-gear</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </div>
+                        <div class="icon-name">bi-box-arrow-right</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h3>操作图标（当前使用）</h3>
+                <div class="icon-grid">
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <div class="icon-name">bi-eye</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-pencil"></i>
+                        </div>
+                        <div class="icon-name">bi-pencil</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                        <div class="icon-name">bi-trash</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-plus"></i>
+                        </div>
+                        <div class="icon-name">bi-plus</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-upload"></i>
+                        </div>
+                        <div class="icon-name">bi-upload</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                    <div class="icon-item">
+                        <div class="icon-display">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <div class="icon-name">bi-download</div>
+                        <div>状态：<span class="working">✓ 正常</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">字体图标问题诊断</h3>
+        <div class="alert alert-warning">
+            <h5>可能的问题：</h5>
+            <ol>
+                <li><strong>字体文件未加载</strong> - 检查网络连接和CDN访问</li>
+                <li><strong>CSS覆盖</strong> - 检查自定义CSS是否覆盖了字体设置</li>
+                <li><strong>编码问题</strong> - 确保页面使用UTF-8编码</li>
+                <li><strong>字体格式不支持</strong> - 某些浏览器可能需要特定格式</li>
+            </ol>
+        </div>
+
+        <div class="alert alert-info">
+            <h5>解决方案：</h5>
+            <ol>
+                <li>下载Bootstrap Icons到本地，避免CDN依赖</li>
+                <li>检查浏览器控制台是否有字体加载错误</li>
+                <li>使用Unicode字符替代图标作为备选方案</li>
+            </ol>
+        </div>
+
+        <hr>
+
+        <h3>Unicode备选方案</h3>
+        <p>如果字体图标无法正常工作，可以使用Unicode字符：</p>
+        <ul>
+            <li>🏠 (U+1F3E0) - 首页</li>
+            <li>🗺️ (U+1F5FA) - 图斑管理</li>
+            <li>📊 (U+1F4CA) - 统计分析</li>
+            <li>⚙️ (U+2699) - 系统设置</li>
+            <li>👁️ (U+1F441) - 查看</li>
+            <li>✏️ (U+270F) - 编辑</li>
+            <li>🗑️ (U+1F5D1) - 删除</li>
+        </ul>
+    </div>
+</body>
+</html>

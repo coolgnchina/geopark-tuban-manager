@@ -10,6 +10,7 @@ from routes.stats import stats_bp
 from routes.system import system_bp
 from utils.helpers import format_date, format_datetime, get_status_color
 import os
+from test_icons import test_bp
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -22,6 +23,7 @@ def create_app(config_class=Config):
     app.register_blueprint(tuban_bp, url_prefix='/tuban')
     app.register_blueprint(stats_bp, url_prefix='/stats')
     app.register_blueprint(system_bp, url_prefix='/system')
+    app.register_blueprint(test_bp, url_prefix='/test')
 
     # 添加模板全局函数
     app.jinja_env.globals.update(format_date=format_date)
@@ -108,7 +110,9 @@ def create_app(config_class=Config):
     @app.before_request
     def before_request():
         """登录检查"""
-        if request.endpoint not in ['login', 'static'] and 'username' not in session:
+        # 允许访问的端点
+        allowed_endpoints = ['login', 'static', 'tuban.export_excel', 'tuban.import_excel']
+        if request.endpoint not in allowed_endpoints and 'username' not in session:
             return redirect(url_for('login'))
 
     return app

@@ -129,7 +129,7 @@ def export_tubans_to_excel(tubans):
         for tuban in tubans:
             data.append({
                 '图斑编号': tuban.tuban_code,
-                '所属地质公园名称': tuban.park_name,
+                '项目名称': tuban.park_name,
                 '所在功能区': tuban.func_zone,
                 '活动/设施名称': tuban.facility_name,
                 '经度': tuban.longitude,

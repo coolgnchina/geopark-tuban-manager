@@ -1,0 +1,37 @@
+/* Local Bootstrap Icons fallback */
+.bi {
+  display: inline-block;
+  font-family: "bootstrap-icons" !important;
+  font-style: normal;
+  font-weight: normal !important;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: -0.125em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Unicode fallback icons for common Bootstrap Icons */
+.bi-geo-fill::before { content: "🗺️"; }
+.bi-speedometer2::before { content: "📊"; }
+.bi-table::before { content: "📋"; }
+.bi-graph-up::before { content: "📈"; }
+.bi-gear::before { content: "⚙️"; }
+.bi-box-arrow-left::before { content: "🚪"; }
+.bi-list::before { content: "☰"; }
+.bi-house::before { content: "🏠"; }
+.bi-map::before { content: "🗺️"; }
+.bi-eye::before { content: "👁️"; }
+.bi-pencil::before { content: "✏️"; }
+.bi-trash::before { content: "🗑️"; }
+.bi-plus::before { content: "➕"; }
+.bi-upload::before { content: "📤"; }
+.bi-download::before { content: "📥"; }
+.bi-geo-alt::before { content: "📍"; }
+.bi-calendar::before { content: "📅"; }
+.bi-person::before { content: "👤"; }
+.bi-building::before { content: "🏢"; }
+.bi-exclamation-triangle::before { content: "⚠️"; }
+.bi-check-circle::before { content: "✅"; }
+.bi-x-circle::before { content: "❌"; }

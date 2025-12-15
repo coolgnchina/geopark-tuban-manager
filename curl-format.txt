@@ -1,0 +1,1 @@
+Time: %{time_total}s\nSize: %{size_download} bytes\nSpeed: %{speed_download} bytes/s
