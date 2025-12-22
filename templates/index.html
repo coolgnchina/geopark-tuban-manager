@@ -4,67 +4,129 @@
 
 {% block header %}首页概览{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-house me-1"></i>首页
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<!-- 统计卡片 -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">图斑总数</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_count }}</div>
+<div class="content-wrapper">
+<!-- 关键指标概览 -->
+<div class="dashboard-overview mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0 fw-bold text-primary">
+            <i class="bi bi-speedometer2 me-2"></i>关键指标概览
+        </h2>
+        <small class="text-muted">
+            <i class="bi bi-clock me-1"></i>最后更新: {{ get_current_date() }}
+        </small>
+    </div>
+
+    <!-- 统计卡片网格 -->
+    <div class="stats-row">
+        <div class="col">
+            <div class="card stats-card primary h-100">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-label">图斑总数</div>
+                        <div class="stats-value">{{ "{:,}".format(total_count) }}</div>
+                        <div class="stats-change text-muted">
+                            <i class="bi bi-database me-1"></i>累计数据
+                        </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fa-2x text-gray-300">📍</i>
+                    <div class="stats-icon">📍</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stats-card warning h-100">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-label">待整改</div>
+                        <div class="stats-value">{{ "{:,}".format(pending_count) }}</div>
+                        <div class="stats-change text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>需要处理
+                        </div>
                     </div>
+                    <div class="stats-icon">⚠️</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stats-card info h-100">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-label">整改中</div>
+                        <div class="stats-value">{{ "{:,}".format(in_progress_count) }}</div>
+                        <div class="stats-change text-info">
+                            <i class="bi bi-arrow-repeat me-1"></i>进行中
+                        </div>
+                    </div>
+                    <div class="stats-icon">🔄</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stats-card success h-100">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-label">已销号</div>
+                        <div class="stats-value">{{ "{:,}".format(closed_count) }}</div>
+                        <div class="stats-change text-success">
+                            <i class="bi bi-check-circle me-1"></i>完成率 {{ "%.1f"|format((closed_count / total_count * 100) if total_count > 0 else 0) }}%
+                        </div>
+                    </div>
+                    <div class="stats-icon">✅</div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">待整改</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fa-2x text-gray-300">⚠️</i>
+<!-- 数据可视化区域 -->
+<div class="chart-section mb-4">
+    <h2 class="h4 mb-3 fw-bold text-primary">
+        <i class="bi bi-graph-up me-2"></i>数据可视化
+    </h2>
+
+    <div class="chart-row">
+        <!-- 问题类型分布 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-pie-chart me-2 text-primary"></i>问题类型分布
+                    </h6>
+                    <small class="text-muted">按类别统计</small>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="problemTypeChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">整改中</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ in_progress_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fa-2x text-gray-300">🔄</i>
-                    </div>
+        <!-- 功能区分布 -->
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-bar-chart me-2 text-primary"></i>功能区分布
+                    </h6>
+                    <small class="text-muted">按区域统计</small>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">已销号</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ closed_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fa-2x text-gray-300">✅</i>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="zoneChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -72,68 +134,76 @@
     </div>
 </div>
 
-<!-- 图表区域 -->
-<div class="row">
-    <!-- 问题类型分布 -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">问题类型分布</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="problemTypeChart" width="400" height="300"></canvas>
+<!-- 预警和待办信息 -->
+<div class="alert-section">
+    <h2 class="h4 mb-3 fw-bold text-primary">
+        <i class="bi bi-bell me-2"></i>重要提醒
+    </h2>
+
+    <div class="stats-row">
+        <!-- 超期预警 -->
+        <div class="col">
+            <div class="card border-danger h-100">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-exclamation-triangle me-2"></i>超期预警
+                    </h6>
+                    <span class="badge bg-white text-danger rounded-pill">{{ overdue_count }}</span>
+                </div>
+                <div class="card-body">
+                    {% if overdue_count > 0 %}
+                        <div class="alert alert-danger border-0 bg-transparent">
+                            <i class="bi bi-alarm me-2"></i>
+                            <strong>{{ overdue_count }}</strong> 个图斑整改已超期，请立即处理！
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">最后检查: {{ get_current_date() }}</small>
+                            <a href="{{ url_for('tuban.list', rectify_status='未整改') }}" class="btn btn-danger btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>立即查看
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                            <p class="text-success mb-0 mt-2">暂无超期图斑</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 功能区分布 -->
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">功能区分布</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="zoneChart" width="400" height="300"></canvas>
+        <!-- 本周待办 -->
+        <div class="col">
+            <div class="card border-warning h-100">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-calendar-week me-2"></i>本周待办
+                    </h6>
+                    <span class="badge bg-dark text-warning rounded-pill">{{ week_todo }}</span>
+                </div>
+                <div class="card-body">
+                    {% if week_todo > 0 %}
+                        <div class="alert alert-warning border-0 bg-transparent">
+                            <i class="bi bi-calendar-check me-2"></i>
+                            本周有 <strong>{{ week_todo }}</strong> 个图斑需要完成整改
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">本周内处理</small>
+                            <a href="{{ url_for('tuban.list') }}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-list-task me-1"></i>查看待办
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-cup-hot text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0 mt-2">本周暂无待办事项</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- 预警信息 -->
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-danger">⚠️ 超期预警</h6>
-                <span class="badge bg-danger rounded-pill">{{ overdue_count }}</span>
-            </div>
-            <div class="card-body">
-                {% if overdue_count > 0 %}
-                    <p class="text-danger">有 {{ overdue_count }} 个图斑整改已超期，请尽快处理！</p>
-                    <a href="{{ url_for('tuban.list', rectify_status='未整改') }}" class="btn btn-sm btn-danger">查看详情</a>
-                {% else %}
-                    <p class="text-muted">暂无超期图斑</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-warning">📅 本周待办</h6>
-                <span class="badge bg-warning rounded-pill">{{ week_todo }}</span>
-            </div>
-            <div class="card-body">
-                {% if week_todo > 0 %}
-                    <p class="text-warning">本周有 {{ week_todo }} 个图斑需要完成整改。</p>
-                    <a href="{{ url_for('tuban.list') }}" class="btn btn-sm btn-warning">查看详情</a>
-                {% else %}
-                    <p class="text-muted">本周暂无待办事项</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 

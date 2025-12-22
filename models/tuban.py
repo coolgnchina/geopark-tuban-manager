@@ -34,6 +34,7 @@ class Tuban(db.Model):
     problem_desc = db.Column(db.Text, comment='问题描述')
     geo_heritage_type = db.Column(db.String(100), comment='涉及地质遗迹类型')
     impact_level = db.Column(db.String(20), comment='影响程度')
+    is_superior_focus = db.Column(db.String(10), comment='是否上级重点关注')
     is_illegal = db.Column(db.String(20), comment='是否违法违规')
     violated_law = db.Column(db.Text, comment='违反法规条款')
 
@@ -94,6 +95,7 @@ class Tuban(db.Model):
             'problem_desc': self.problem_desc,
             'geo_heritage_type': self.geo_heritage_type,
             'impact_level': self.impact_level,
+            'is_superior_focus': self.is_superior_focus,
             'is_illegal': self.is_illegal,
             'violated_law': self.violated_law,
             'rectify_measure': self.rectify_measure,

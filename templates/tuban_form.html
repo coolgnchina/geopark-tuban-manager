@@ -5,7 +5,7 @@
 {% block header %}{{ '编辑图斑' if action == 'edit' else '新增图斑' }}{% endblock %}
 
 {% block content %}
-<form method="POST" class="needs-validation" novalidate>
+<form method="POST" class="needs-validation" novalidate enctype="multipart/form-data" id="tubanForm">
     <div class="row">
         <!-- 基础信息 -->
         <div class="col-12 mb-4">
@@ -170,6 +170,14 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
+                            <label for="is_superior_focus" class="form-label">是否上级重点关注</label>
+                            <select class="form-select" id="is_superior_focus" name="is_superior_focus">
+                                <option value="">请选择...</option>
+                                <option value="是" {% if tuban and tuban.is_superior_focus == '是' %}selected{% endif %}>是</option>
+                                <option value="否" {% if tuban and tuban.is_superior_focus == '否' %}selected{% endif %}>否</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
                             <label for="is_illegal" class="form-label">是否违法违规</label>
                             <select class="form-select" id="is_illegal" name="is_illegal">
                                 <option value="">请选择...</option>
@@ -308,10 +316,29 @@
                                    value="{{ tuban.responsible_dept if tuban else '' }}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="attachments" class="form-label">附件材料</label>
-                            <input type="text" class="form-control" id="attachments" name="attachments"
-                                   value="{{ tuban.attachments if tuban else '' }}"
-                                   placeholder="文件路径或链接">
+                            <label for="attachment_file" class="form-label">附件材料</label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="attachment_file" name="attachment_file"
+                                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.zip,.rar" multiple>
+                                <button type="button" class="btn btn-outline-primary" id="uploadBtn"
+                                        onclick="uploadAttachments()" disabled>
+                                    <i class="bi bi-upload"></i> 上传
+                                </button>
+                            </div>
+                            <input type="hidden" id="attachments" name="attachments"
+                                   value="{{ tuban.attachments if tuban else '' }}">
+                            <div class="form-text">支持 PDF、Word、图片、压缩包等格式，最大16MB</div>
+                            <div id="attachment_preview" class="mt-2">
+                                {% if tuban and tuban.attachments %}
+                                    <div class="alert alert-info alert-sm d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-paperclip"></i> 当前附件：{{ tuban.attachments }}
+                                        </span>
+                                        <button type="button" class="btn-close btn-sm" onclick="removeAttachment()"></button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div id="upload_status" class="mt-2"></div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="remark" class="form-label">备注</label>
@@ -390,5 +417,209 @@
             document.getElementById('is_closed').value = '否';
         }
     });
+
+    // 文件上传处理
+    const fileInput = document.getElementById('attachment_file');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const hiddenInput = document.getElementById('attachments');
+    const previewDiv = document.getElementById('attachment_preview');
+    const uploadStatus = document.getElementById('upload_status');
+
+    // 处理文件选择
+    fileInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            // 检查文件大小 (16MB)
+            const maxSize = 16 * 1024 * 1024;
+            let totalSize = 0;
+            let validFiles = [];
+
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].size > maxSize) {
+                    alert(`文件 ${files[i].name} 超过16MB限制`);
+                    fileInput.value = '';
+                    uploadBtn.disabled = true;
+                    return;
+                }
+                totalSize += files[i].size;
+                validFiles.push(files[i]);
+            }
+
+            // 启用上传按钮
+            uploadBtn.disabled = false;
+
+            // 显示文件信息
+            let fileInfo = '';
+            if (validFiles.length === 1) {
+                fileInfo = `
+                    <div class="alert alert-info alert-sm d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-file-earmark-text"></i>
+                            已选择文件: ${validFiles[0].name} (${(validFiles[0].size / 1024 / 1024).toFixed(2)}MB)
+                        </span>
+                        <button type="button" class="btn-close btn-sm" onclick="clearFileSelection()"></button>
+                    </div>
+                `;
+            } else {
+                fileInfo = `
+                    <div class="alert alert-info alert-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="bi bi-files"></i> 已选择 ${validFiles.length} 个文件</span>
+                            <button type="button" class="btn-close btn-sm" onclick="clearFileSelection()"></button>
+                        </div>
+                `;
+                validFiles.forEach(file => {
+                    fileInfo += `<div class="small">- ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)</div>`;
+                });
+                fileInfo += '</div>';
+            }
+            previewDiv.innerHTML = fileInfo;
+        } else {
+            uploadBtn.disabled = true;
+            previewDiv.innerHTML = '';
+        }
+    });
+
+    // 上传附件（AJAX）- 支持多文件
+    window.uploadAttachments = async function() {
+        const files = fileInput.files;
+        if (!files || files.length === 0) {
+            alert('请先选择文件');
+            return;
+        }
+
+        try {
+            // 显示上传状态
+            uploadStatus.innerHTML = '<div class="alert alert-warning alert-sm"><i class="bi bi-hourglass-split"></i> 正在上传文件...</div>';
+            uploadBtn.disabled = true;
+
+            let uploadedFiles = [];
+            let uploadErrors = [];
+
+            // 逐个上传文件
+            for (let i = 0; i < files.length; i++) {
+                const formData = new FormData();
+                formData.append('file', files[i]);
+
+                try {
+                    const response = await fetch('{{ url_for("tuban.upload_attachment") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        uploadedFiles.push(result.filename);
+                    } else {
+                        uploadErrors.push(`${files[i].name}: ${result.message}`);
+                    }
+                } catch (error) {
+                    uploadErrors.push(`${files[i].name}: 上传失败`);
+                }
+            }
+
+            // 处理上传结果
+            if (uploadedFiles.length > 0) {
+                // 获取已存在的附件
+                let existingAttachments = hiddenInput.value ? hiddenInput.value.split(',') : [];
+
+                // 合并新旧附件
+                let allAttachments = existingAttachments.concat(uploadedFiles);
+                hiddenInput.value = allAttachments.join(',');
+
+                // 更新预览区域
+                updateAttachmentPreview(allAttachments);
+
+                // 显示成功信息
+                if (uploadErrors.length === 0) {
+                    uploadStatus.innerHTML = `<div class="alert alert-success alert-sm"><i class="bi bi-check-circle"></i>
+                        成功上传 ${uploadedFiles.length} 个文件！正在自动保存...</div>`;
+
+                    // 自动提交表单
+                    setTimeout(() => {
+                        document.getElementById('tubanForm').submit();
+                    }, 1500);
+                } else {
+                    uploadStatus.innerHTML = `<div class="alert alert-warning alert-sm"><i class="bi bi-exclamation-triangle"></i>
+                        成功上传 ${uploadedFiles.length} 个文件，${uploadErrors.length} 个失败。</div>`;
+                }
+            } else {
+                uploadStatus.innerHTML = `<div class="alert alert-danger alert-sm"><i class="bi bi-exclamation-circle"></i>
+                    上传失败：${uploadErrors.join(', ')}</div>`;
+            }
+
+            // 清除文件选择
+            fileInput.value = '';
+
+            // 3秒后清除状态信息
+            setTimeout(() => {
+                uploadStatus.innerHTML = '';
+            }, 3000);
+        } catch (error) {
+            console.error('上传错误:', error);
+            uploadStatus.innerHTML = '<div class="alert alert-danger alert-sm"><i class="bi bi-exclamation-circle"></i> 上传出错，请重试</div>';
+            uploadBtn.disabled = false;
+        }
+    };
+
+    // 更新附件预览
+    window.updateAttachmentPreview = function(attachments) {
+        if (!attachments || attachments.length === 0) {
+            previewDiv.innerHTML = '';
+            return;
+        }
+
+        let previewHtml = '';
+        attachments.forEach((filename, index) => {
+            previewHtml += `
+                <div class="alert alert-info alert-sm d-flex justify-content-between align-items-center mb-2">
+                    <span>
+                        <i class="bi bi-paperclip"></i>
+                        ${filename}
+                    </span>
+                    <button type="button" class="btn-close btn-sm" onclick="removeAttachment(${index})"></button>
+                </div>
+            `;
+        });
+        previewDiv.innerHTML = previewHtml;
+    };
+
+    // 清除文件选择
+    window.clearFileSelection = function() {
+        fileInput.value = '';
+        uploadBtn.disabled = true;
+        // 清除临时选择的文件预览，但保留已上传的附件预览
+        const tempPreview = previewDiv.querySelector('.alert-info');
+        if (tempPreview && !tempPreview.querySelector('.btn-close[onclick^="removeAttachment"]')) {
+            tempPreview.remove();
+        }
+    };
+
+    // 删除指定附件
+    window.removeAttachment = function(index) {
+        if (confirm('确定要删除这个附件吗？')) {
+            let attachments = hiddenInput.value ? hiddenInput.value.split(',') : [];
+
+            if (index >= 0 && index < attachments.length) {
+                // 从数组中删除指定索引的附件
+                attachments.splice(index, 1);
+
+                // 更新隐藏字段
+                hiddenInput.value = attachments.join(',');
+
+                // 更新预览
+                updateAttachmentPreview(attachments);
+
+                // 如果没有附件了，清空预览区域
+                if (attachments.length === 0) {
+                    previewDiv.innerHTML = '';
+                }
+            }
+        }
+    };
 </script>
 {% endblock %}

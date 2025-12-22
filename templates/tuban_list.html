@@ -4,147 +4,291 @@
 
 {% block header %}图斑管理{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-table me-1"></i>图斑管理
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<!-- 工具栏 -->
-<div class="card shadow mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">关键词搜索</label>
-                <input type="text" class="form-control" name="search" value="{{ search_keyword }}"
-                       placeholder="图斑编号、设施名称、建设单位...">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">项目名称</label>
-                <select class="form-select" name="park_name">
-                    <option value="">全部</option>
-                    {% for park in park_names %}
-                        <option value="{{ park.park_name }}" {% if park_name == park.park_name %}selected{% endif %}>{{ park.park_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">问题类型</label>
-                <select class="form-select" name="problem_type">
-                    <option value="">全部</option>
-                    {% for type in problem_types %}
-                        <option value="{{ type.problem_type }}" {% if problem_type == type.problem_type %}selected{% endif %}>{{ type.problem_type }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">整改进展</label>
-                <select class="form-select" name="rectify_status">
-                    <option value="">全部</option>
-                    {% for status in rectify_statuses %}
-                        <option value="{{ status.rectify_status }}" {% if rectify_status == status.rectify_status %}selected{% endif %}>{{ status.rectify_status }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">功能区</label>
-                <select class="form-select" name="func_zone">
-                    <option value="">全部</option>
-                    {% for zone in func_zones %}
-                        <option value="{{ zone.func_zone }}" {% if func_zone == zone.func_zone %}selected{% endif %}>{{ zone.func_zone }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> 搜索
-                </button>
-                <a href="{{ url_for('tuban.list') }}" class="btn btn-secondary">重置</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- 操作按钮 -->
-<div class="d-flex justify-content-between mb-3">
-    <div>
-        <a href="{{ url_for('tuban.add') }}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> 新增图斑
-        </a>
-        <!-- Excel导入模态框触发按钮 -->
-        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
-            <i class="bi bi-upload"></i> Excel导入
-        </button>
-    </div>
-    <a href="{{ url_for('tuban.export_excel', **request.args) }}" class="btn btn-outline-primary">
-        <i class="bi bi-download"></i> 导出Excel
-    </a>
-</div>
-
-<!-- 图斑列表 -->
-<div class="card shadow">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th width="80">序号</th>
-                        <th>图斑编号</th>
-                        <th>项目名称</th>
-                        <th>活动/设施名称</th>
-                        <th>问题类型</th>
-                        <th>影响程度</th>
-                        <th>整改进展</th>
-                        <th>整改期限</th>
-                        <th width="150">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tuban in pagination.items %}
-                        <tr>
-                            <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
-                            <td>
-                                <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="text-decoration-none">
-                                    {{ tuban.tuban_code }}
-                                </a>
-                            </td>
-                            <td>{{ tuban.park_name }}</td>
-                            <td>{{ tuban.facility_name }}</td>
-                            <td>{{ tuban.problem_type }}</td>
-                            <td>
-                                <span class="badge bg-{{ get_status_color(tuban.impact_level) }}">{{ tuban.impact_level }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ get_status_color(tuban.rectify_status) }}">{{ tuban.rectify_status }}</span>
-                            </td>
-                            <td>
-                                {% if tuban.rectify_deadline %}
-                                    {% set today = get_current_date() %}
-                                    {% set is_overdue = tuban.rectify_deadline < today and tuban.rectify_status in ['未整改', '整改中'] %}
-                                    <span class="{% if is_overdue %}text-danger fw-bold{% endif %}">
-                                        {{ format_date(tuban.rectify_deadline) }}
-                                        {% if is_overdue %} (已超期){% endif %}
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="btn btn-outline-primary" title="查看">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{{ url_for('tuban.edit', id=tuban.id) }}" class="btn btn-outline-warning" title="编辑">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger" title="删除"
-                                            onclick="if(confirmDelete()) location.href='{{ url_for('tuban.delete', id=tuban.id) }}'">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">暂无数据</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="content-wrapper">
+<!-- 页面标题和统计 -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h4 mb-2 fw-bold text-primary">
+                <i class="bi bi-table me-2"></i>图斑数据管理
+            </h2>
+            <p class="text-muted mb-0">
+                共找到 <strong class="text-primary">{{ pagination.total }}</strong> 条记录
+                {% if search_keyword or park_name or problem_type or rectify_status or func_zone %}
+                    <span class="badge bg-secondary ms-2">筛选中</span>
+                {% endif %}
+            </p>
         </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('tuban.add') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i>新增图斑
+            </a>
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="bi bi-upload me-1"></i>Excel导入
+            </button>
+            <a href="{{ url_for('tuban.export_excel', **request.args) }}" class="btn btn-outline-primary">
+                <i class="bi bi-download me-1"></i>导出Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 搜索筛选器 -->
+<div class="search-filters mb-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">
+                <i class="bi bi-funnel me-2 text-primary"></i>筛选条件
+            </h6>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleFilters">
+                <i class="bi bi-chevron-up" id="toggleIcon"></i>收起
+            </button>
+        </div>
+        <div class="card-body" id="filtersBody">
+            <form method="GET" id="searchForm">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-search me-1 text-muted"></i>关键词搜索
+                        </label>
+                        <input type="text" class="form-control form-control-lg" name="search" value="{{ search_keyword }}"
+                               placeholder="图斑编号、设施名称、建设单位...">
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-geo-alt me-1 text-muted"></i>项目名称
+                        </label>
+                        <select class="form-select form-select-lg" name="park_name">
+                            <option value="">全部项目</option>
+                            {% for park in park_names %}
+                                <option value="{{ park.park_name }}" {% if park_name == park.park_name %}selected{% endif %}>{{ park.park_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-exclamation-triangle me-1 text-muted"></i>问题类型
+                        </label>
+                        <select class="form-select form-select-lg" name="problem_type">
+                            <option value="">全部类型</option>
+                            {% for type in problem_types %}
+                                <option value="{{ type.problem_type }}" {% if problem_type == type.problem_type %}selected{% endif %}>{{ type.problem_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-arrow-repeat me-1 text-muted"></i>整改进展
+                        </label>
+                        <select class="form-select form-select-lg" name="rectify_status">
+                            <option value="">全部状态</option>
+                            {% for status in rectify_statuses %}
+                                <option value="{{ status.rectify_status }}" {% if rectify_status == status.rectify_status %}selected{% endif %}>{{ status.rectify_status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-map me-1 text-muted"></i>功能区
+                        </label>
+                        <select class="form-select form-select-lg" name="func_zone">
+                            <option value="">全部区域</option>
+                            {% for zone in func_zones %}
+                                <option value="{{ zone.func_zone }}" {% if func_zone == zone.func_zone %}selected{% endif %}>{{ zone.func_zone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-1 col-md-6 d-flex align-items-end">
+                        <div class="btn-group w-100" role="group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <a href="{{ url_for('tuban.list') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 数据列表 -->
+<div class="data-table-section">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">
+                <i class="bi bi-list-ul me-2 text-primary"></i>图斑数据列表
+            </h6>
+            <div class="d-flex align-items-center gap-3">
+                <small class="text-muted">
+                    第 <strong>{{ pagination.page }}</strong> 页，共 <strong>{{ pagination.pages }}</strong> 页
+                </small>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" id="refreshTable">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <div class="table-container">
+                    <table class="table table-hover mb-0" id="tubanTable">
+                        <thead class="table-light sticky-top">
+                        <tr>
+                            <th width="60" class="text-center">
+                                <small class="fw-bold">序号</small>
+                            </th>
+                            <th>
+                                <small class="fw-bold">图斑编号</small>
+                            </th>
+                            <th>
+                                <small class="fw-bold">项目名称</small>
+                            </th>
+                            <th>
+                                <small class="fw-bold">活动/设施名称</small>
+                            </th>
+                            <th>
+                                <small class="fw-bold">问题类型</small>
+                            </th>
+                            <th width="100">
+                                <small class="fw-bold">影响程度</small>
+                            </th>
+                            <th width="100">
+                                <small class="fw-bold">上级关注</small>
+                            </th>
+                            <th width="100">
+                                <small class="fw-bold">整改进展</small>
+                            </th>
+                            <th width="120">
+                                <small class="fw-bold">整改期限</small>
+                            </th>
+                            <th width="140" class="text-center">
+                                <small class="fw-bold">操作</small>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tuban in pagination.items %}
+                            <tr class="data-row">
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">{{ (pagination.page - 1) * pagination.per_page + loop.index }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('tuban.detail', id=tuban.id) }}"
+                                       class="text-decoration-none fw-bold text-primary d-inline-flex align-items-center">
+                                        {{ tuban.tuban_code }}
+                                        <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="fw-medium">{{ tuban.park_name or '-' }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-truncate d-block" style="max-width: 200px;"
+                                          title="{{ tuban.facility_name or '' }}">
+                                        {{ tuban.facility_name or '-' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ tuban.problem_type or '-' }}</span>
+                                </td>
+                                <td>
+                                    {% set impact_colors = {'严重': 'danger', '较重': 'warning', '一般': 'info', '轻微': 'success'} %}
+                                    {% set color = impact_colors.get(tuban.impact_level, 'secondary') %}
+                                    <span class="badge bg-{{ color }}">{{ tuban.impact_level or '-' }}</span>
+                                </td>
+                                <td>
+                                    {% if tuban.is_superior_focus == '是' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-star-fill me-1"></i>重点
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="bi bi-circle me-1"></i>一般
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set status_colors = {'未整改': 'danger', '整改中': 'warning', '已整改': 'success', '已销号': 'primary'} %}
+                                    {% set color = status_colors.get(tuban.rectify_status, 'secondary') %}
+                                    <span class="badge bg-{{ color }}">{{ tuban.rectify_status or '-' }}</span>
+                                </td>
+                                <td>
+                                    {% if tuban.rectify_deadline %}
+                                        {% set today = get_current_date() %}
+                                        {% set is_overdue = tuban.rectify_deadline < today and tuban.rectify_status in ['未整改', '整改中'] %}
+                                        {% if is_overdue %}
+                                            <div class="text-danger">
+                                                <small class="fw-bold">{{ format_date(tuban.rectify_deadline) }}</small>
+                                                <div class="small">
+                                                    <i class="bi bi-exclamation-triangle"></i>已超期
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div>
+                                                <small>{{ format_date(tuban.rectify_deadline) }}</small>
+                                                {% if tuban.rectify_status in ['未整改', '整改中'] %}
+                                                    <div class="text-warning small">
+                                                        <i class="bi bi-clock"></i>进行中
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('tuban.detail', id=tuban.id) }}"
+                                           class="btn btn-outline-primary" title="查看详情">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('tuban.edit', id=tuban.id) }}"
+                                           class="btn btn-outline-warning" title="编辑">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" title="删除"
+                                                onclick="if(confirmDelete('确定要删除图斑【{{ tuban.tuban_code }}】吗？')) location.href='{{ url_for('tuban.delete', id=tuban.id) }}'">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <div class="mt-2">暂无数据</div>
+                                        <small>请调整筛选条件或添加新的图斑数据</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
 
         <!-- 分页 -->
         {% if pagination.pages > 1 %}
@@ -181,29 +325,211 @@
 
 <!-- Excel导入模态框 -->
 <div class="modal fade" id="importModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Excel导入</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>Excel数据导入
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('tuban.import_excel') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('tuban.import_excel') }}" enctype="multipart/form-data" id="importForm">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="file" class="form-label">选择Excel文件</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
-                        <div class="form-text">支持 .xlsx 和 .xls 格式，最大16MB</div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="file" class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-excel me-1 text-success"></i>选择Excel文件
+                                </label>
+                                <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    支持 .xlsx 和 .xls 格式，最大文件大小 16MB
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="bi bi-file-earmark-arrow-up text-success" style="font-size: 3rem;"></i>
+                                <div class="mt-2">
+                                    <small class="text-muted">拖拽文件到此处</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="alert alert-info">
-                        <small>提示：请确保Excel文件格式正确，包含必要的字段信息。</small>
+
+                    <div class="alert alert-warning border-0 bg-light">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>导入注意事项
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>请确保Excel文件包含必要的字段：图斑编号、项目名称、设施名称等</li>
+                            <li>日期格式请使用：YYYY-MM-DD</li>
+                            <li>重复的图斑编号将自动跳过</li>
+                            <li>建议先下载模板文件，按格式填写数据</li>
+                        </ul>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('tuban.export_excel') }}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>下载导出文件
+                        </a>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">导入</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>取消
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="importBtn">
+                        <i class="bi bi-upload me-1"></i>开始导入
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 筛选器收起/展开功能
+    const toggleBtn = document.getElementById('toggleFilters');
+    const filtersBody = document.getElementById('filtersBody');
+    const toggleIcon = document.getElementById('toggleIcon');
+    let filtersVisible = true;
+
+    toggleBtn.addEventListener('click', function() {
+        filtersVisible = !filtersVisible;
+        if (filtersVisible) {
+            filtersBody.style.display = 'block';
+            toggleIcon.className = 'bi bi-chevron-up';
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-up" id="toggleIcon"></i>收起';
+        } else {
+            filtersBody.style.display = 'none';
+            toggleIcon.className = 'bi bi-chevron-down';
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-down" id="toggleIcon"></i>展开';
+        }
+    });
+
+    // 表格刷新功能
+    const refreshBtn = document.getElementById('refreshTable');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise rotating"></i>';
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+    }
+
+    // 表格行高亮功能
+    const tableRows = document.querySelectorAll('.data-row');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(46, 139, 87, 0.05)';
+        });
+
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+
+    // 拖拽上传功能
+    const modal = document.getElementById('importModal');
+    const fileInput = document.getElementById('file');
+    const importForm = document.getElementById('importForm');
+    const importBtn = document.getElementById('importBtn');
+
+    if (modal && fileInput) {
+        modal.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+
+        modal.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+        });
+
+        modal.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                updateFileInfo(e.target.files[0]);
+            }
+        });
+    }
+
+    function updateFileInfo(file) {
+        if (importBtn) {
+            importBtn.innerHTML = `<i class="bi bi-upload me-1"></i>导入 ${file.name}`;
+        }
+    }
+
+    // 导入表单提交验证
+    if (importForm) {
+        importForm.addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('请选择要导入的Excel文件');
+                return false;
+            }
+
+            const file = fileInput.files[0];
+            const maxSize = 16 * 1024 * 1024; // 16MB
+
+            if (file.size > maxSize) {
+                e.preventDefault();
+                alert('文件大小超过16MB限制');
+                return false;
+            }
+
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>导入中...';
+        });
+    }
+});
+
+// 添加旋转动画样式
+const style = document.createElement('style');
+style.textContent = `
+    .rotating {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .modal.drag-over {
+        background-color: rgba(46, 139, 87, 0.1);
+    }
+
+    .table-hover tbody tr:hover {
+        cursor: pointer;
+    }
+
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+`;
+document.head.appendChild(style);
+</script>
 {% endblock %}

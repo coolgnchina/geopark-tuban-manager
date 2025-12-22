@@ -8,6 +8,7 @@ from models.rectify_record import RectifyRecord
 from routes.tuban import tuban_bp
 from routes.stats import stats_bp
 from routes.system import system_bp
+from routes.map import map_bp
 from utils.helpers import format_date, format_datetime, get_status_color
 import os
 from test_icons import test_bp
@@ -23,6 +24,7 @@ def create_app(config_class=Config):
     app.register_blueprint(tuban_bp, url_prefix='/tuban')
     app.register_blueprint(stats_bp, url_prefix='/stats')
     app.register_blueprint(system_bp, url_prefix='/system')
+    app.register_blueprint(map_bp, url_prefix='/map')
     app.register_blueprint(test_bp, url_prefix='/test')
 
     # 添加模板全局函数

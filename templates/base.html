@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,31 +22,49 @@
 
     {% block extra_css %}{% endblock %}
 </head>
+
 <body class="bg-light">
     <div class="d-flex" id="wrapper">
         <!-- 侧边栏 -->
         <div class="bg-dark text-white" id="sidebar-wrapper">
-            <div class="sidebar-heading text-center py-4 border-bottom">
-                <h5 class="mb-0">
+            <div class="sidebar-heading text-center py-3 border-bottom">
+                <h5 class="mb-1">
                     <i class="bi bi-geo-fill me-2"></i>图斑管家
                 </h5>
-                <small class="text-muted">地质公园管理系统</small>
+                <small class="text-muted d-block">地质公园管理系统</small>
             </div>
-            <div class="list-group list-group-flush my-3">
-                <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'index' %}active{% endif %}">
-                    <i class="bi bi-speedometer2 me-2"></i>首页概览
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('index') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    <span class="nav-text">首页概览</span>
                 </a>
-                <a href="{{ url_for('tuban.list') }}" class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'tuban.list' %}active{% endif %}">
-                    <i class="bi bi-table me-2"></i>图斑管理
+                <a href="{{ url_for('tuban.list') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'tuban.list' %}active{% endif %}">
+                    <i class="bi bi-table me-2"></i>
+                    <span class="nav-text">图斑管理</span>
                 </a>
-                <a href="{{ url_for('stats.index') }}" class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'stats.index' %}active{% endif %}">
-                    <i class="bi bi-graph-up me-2"></i>统计分析
+                <a href="{{ url_for('stats.index') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'stats.index' %}active{% endif %}">
+                    <i class="bi bi-graph-up me-2"></i>
+                    <span class="nav-text">统计分析</span>
                 </a>
-                <a href="{{ url_for('system.dictionaries') }}" class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'system.dictionaries' %}active{% endif %}">
-                    <i class="bi bi-gear me-2"></i>系统设置
+                <a href="{{ url_for('map.index') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'map.index' %}active{% endif %}">
+                    <i class="bi bi-map me-2"></i>
+                    <span class="nav-text">地图展示</span>
                 </a>
-                <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action bg-transparent text-danger fw-bold mt-auto">
-                    <i class="bi bi-box-arrow-left me-2"></i>退出登录
+                <a href="{{ url_for('system.dictionaries') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'system.dictionaries' %}active{% endif %}">
+                    <i class="bi bi-gear me-2"></i>
+                    <span class="nav-text">系统设置</span>
+                </a>
+            </div>
+            <div class="sidebar-footer mt-auto border-top">
+                <a href="{{ url_for('logout') }}"
+                    class="list-group-item list-group-item-action bg-transparent text-danger">
+                    <i class="bi bi-box-arrow-left me-2"></i>
+                    <span class="nav-text">退出登录</span>
                 </a>
             </div>
         </div>
@@ -53,35 +72,49 @@
         <!-- 主内容区 -->
         <div id="page-content-wrapper">
             <!-- 顶部导航 -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 border-bottom shadow-sm">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white py-2 px-4 border-bottom shadow-sm">
                 <div class="d-flex align-items-center">
-                    <i class="bi bi-list fs-4 me-3" id="menu-toggle" style="cursor: pointer;"></i>
-                    <h2 class="fs-5 m-0">{% block header %}地质公园疑似违法图斑管理系统{% endblock %}</h2>
+                    <i class="bi bi-list fs-4 me-3 text-primary" id="menu-toggle" style="cursor: pointer;"
+                        role="button"></i>
+                    <div class="d-flex flex-column">
+                        <h1 class="fs-5 m-0 fw-bold text-primary">{% block header %}地质公园疑似违法图斑管理系统{% endblock %}</h1>
+                        {% block breadcrumb %}{% endblock %}
+                    </div>
                 </div>
-                <div class="ms-auto d-flex align-items-center">
-                    <span class="text-muted me-3">
-                        <i class="bi bi-person-circle me-1"></i>{{ session.username }}
-                    </span>
-                    <span class="badge bg-success">在线</span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center text-muted">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span>{{ session.username }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="position-relative">
+                            <span class="badge bg-success rounded-pill"
+                                style="width: 8px; height: 8px; display: inline-block;"></span>
+                        </span>
+                        <small class="text-muted">在线</small>
+                    </div>
                 </div>
             </nav>
 
             <!-- 消息提示 -->
             {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="container-fluid px-4 pt-3">
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+            {% if messages %}
+            <div class="container-fluid px-4 pt-3">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show shadow-sm"
+                    role="alert">
+                    <i
+                        class="bi bi-{% if category == 'error' %}exclamation-triangle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% endwith %}
 
             <!-- 主内容 -->
-            <div class="container-fluid px-4 py-4">
+            <div class="main-content-container">
                 {% block content %}{% endblock %}
             </div>
         </div>
@@ -118,4 +151,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
