@@ -26,10 +26,63 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <style>
-    /* 地图容器 */
-    #map-container {
-        height: calc(100vh - 180px);
-        min-height: 400px;
+    /* 主容器 - 去除 padding */
+    .map-page-container {
+        height: calc(100vh - 140px);
+        overflow: hidden;
+    }
+
+    /* 顶部筛选栏 - 紧凑 */
+    .map-toolbar {
+        background: var(--bs-white);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: 0.5rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: nowrap;
+    }
+
+    .toolbar-left {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .toolbar-right {
+        margin-left: auto;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    /* 统计数字 - 紧凑卡片 */
+    .stat-pill {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stat-pill .num { font-size: 0.95rem; }
+    .stat-pill .label { font-weight: normal; opacity: 0.9; font-size: 0.75rem; }
+
+    .stat-pill.total { background: linear-gradient(135deg, #2E8B57, #228B22); }
+    .stat-pill.pending { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .stat-pill.progress { background: linear-gradient(135deg, #FFA500, #e69500); }
+    .stat-pill.closed { background: linear-gradient(135deg, #20c997, #17a2b8); }
+
+    /* 地图容器 - 占左侧大部分 */
+    .map-main {
+        height: 100%;
+        position: relative;
+        border-right: 1px solid var(--bs-border-color);
     }
 
     #map {
@@ -37,91 +90,145 @@
         width: 100%;
     }
 
-    /* 侧边栏 */
-    .tuban-sidebar {
-        max-height: calc(100vh - 180px);
-        overflow-y: auto;
+    /* 图例 - 左下角 */
+    .map-legend-inline {
+        position: absolute;
+        bottom: 15px;
+        left: 10px;
+        background: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        box-shadow: var(--shadow-sm);
+        z-index: 1000;
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.75rem;
     }
 
-    /* 图斑列表 */
-    .tuban-list {
-        max-height: calc(100vh - 180px);
+    .legend-dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .legend-dot span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* 底图切换 - 右上角 */
+    .basemap-btns {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        display: flex;
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .basemap-btns .btn {
+        border: none;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.75rem;
+        background: transparent;
+    }
+
+    .basemap-btns .btn.active {
+        background: var(--bs-primary);
+        color: white;
+    }
+
+    /* 图斑列表侧边栏 */
+    .tuban-sidebar {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+
+    .sidebar-header {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .sidebar-header h6 {
+        margin: 0;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tuban-count {
+        background: var(--bs-info);
+        color: white;
+        padding: 0.1rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+    }
+
+    /* 列表内容 */
+    .tuban-items {
+        flex: 1;
         overflow-y: auto;
+        padding: 0;
     }
 
     .tuban-item {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--bs-border-color);
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.15s;
         border-left: 3px solid transparent;
     }
 
     .tuban-item:hover {
-        background-color: var(--bs-light-bg-subtle);
+        background: var(--bs-light-bg-subtle);
         border-left-color: var(--bs-primary);
     }
 
     .tuban-item.active {
-        background-color: var(--bs-light-bg-subtle);
+        background: var(--bs-primary-bg-subtle);
         border-left-color: var(--bs-primary);
     }
 
-    /* 统计卡片 - 紧凑横向 */
-    .stat-compact {
-        padding: 0.5rem 0.75rem;
-        border-radius: var(--border-radius-sm);
-        color: white;
-        text-align: center;
-        min-width: 80px;
+    .tuban-item:last-child {
+        border-bottom: none;
     }
 
-    .stat-compact.total { background: linear-gradient(135deg, #2E8B57, #228B22); }
-    .stat-compact.pending { background: linear-gradient(135deg, #dc3545, #c82333); }
-    .stat-compact.progress { background: linear-gradient(135deg, #FFA500, #e69500); }
-    .stat-compact.closed { background: linear-gradient(135deg, #20c997, #17a2b8); }
-
-    .stat-compact h4 { font-size: 1.1rem; margin: 0; font-weight: bold; }
-    .stat-compact small { opacity: 0.85; font-size: 0.7rem; }
-
-    /* 图例 */
-    .map-legend {
-        background: white;
-        padding: 0.5rem;
-        border-radius: var(--border-radius-sm);
-        box-shadow: var(--shadow-sm);
+    .tuban-item .code {
+        font-weight: bold;
+        color: var(--bs-primary);
+        font-size: 0.85rem;
     }
 
-    .legend-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        margin-right: 6px;
-        display: inline-block;
-        border: 2px solid white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.25rem;
+    .tuban-item .park {
         font-size: 0.75rem;
+        color: var(--bs-secondary);
+        margin: 0.15rem 0;
     }
 
-    /* 弹窗样式 */
-    .leaflet-popup-content-wrapper {
-        border-radius: 8px;
+    .tuban-item .meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
     }
 
-    .tuban-popup h6 {
-        color: #2E8B57;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 6px;
-        margin-bottom: 6px;
-        font-size: 0.95rem;
-    }
-
-    .tuban-popup .badge {
-        font-size: 0.7rem;
+    /* 状态徽章 */
+    .status-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
     }
 
     /* 加载动画 */
@@ -131,138 +238,133 @@
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 1000;
-        background: rgba(255,255,255,0.9);
-        padding: 20px 40px;
+        background: rgba(255,255,255,0.95);
+        padding: 1rem 1.5rem;
         border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* 下拉框统一样式 */
+    .map-toolbar .form-select-sm {
+        font-size: 0.8rem;
+        padding: 0.25rem 1.75rem 0.25rem 0.5rem;
+        height: auto;
+        min-width: 100px;
+        max-width: 150px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="content-wrapper">
-    <!-- 筛选和统计区域（横向紧凑布局） -->
-    <div class="row g-2 mb-2 align-items-center">
-        <!-- 筛选控件 -->
-        <div class="col-auto">
-            <div class="d-flex gap-2 align-items-center">
-                <select id="filterStatus" class="form-select form-select-sm" style="width: 110px;">
-                    <option value="">全部状态</option>
-                    {% for status in rectify_statuses %}
-                    <option value="{{ status }}">{{ status }}</option>
-                    {% endfor %}
-                    <option value="已销号">已销号</option>
-                </select>
+<div class="content-wrapper p-0" style="margin: -1.5rem;">
+    <!-- 顶部工具栏 -->
+    <div class="map-toolbar">
+        <div class="toolbar-left">
+            <select id="filterStatus" class="form-select form-select-sm">
+                <option value="">全部状态</option>
+                {% for status in rectify_statuses %}
+                <option value="{{ status }}">{{ status }}</option>
+                {% endfor %}
+                <option value="已销号">已销号</option>
+            </select>
 
-                <select id="filterZone" class="form-select form-select-sm" style="width: 130px;">
-                    <option value="">全部功能区</option>
-                    {% for zone in func_zones %}
-                    <option value="{{ zone }}">{{ zone }}</option>
-                    {% endfor %}
-                </select>
+            <select id="filterZone" class="form-select form-select-sm">
+                <option value="">全部功能区</option>
+                {% for zone in func_zones %}
+                <option value="{{ zone }}">{{ zone }}</option>
+                {% endfor %}
+            </select>
 
-                <select id="filterProblem" class="form-select form-select-sm" style="width: 130px;">
-                    <option value="">全部问题类型</option>
-                    {% for type in problem_types %}
-                    <option value="{{ type }}">{{ type }}</option>
-                    {% endfor %}
-                </select>
+            <select id="filterProblem" class="form-select form-select-sm">
+                <option value="">全部问题</option>
+                {% for type in problem_types %}
+                <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
 
-                <select id="filterEvent" class="form-select form-select-sm" style="width: 180px;">
-                    <option value="">全部事件</option>
-                    {% for event in events %}
-                    <option value="{{ event.id }}">{{ event.event_name }}</option>
-                    {% endfor %}
-                </select>
+            <select id="filterEvent" class="form-select form-select-sm">
+                <option value="">全部事件</option>
+                {% for event in events %}
+                <option value="{{ event.id }}">{{ event.event_name }}</option>
+                {% endfor %}
+            </select>
 
-                <button id="btnRefresh" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
+            <button id="btnRefresh" class="btn btn-sm btn-outline-secondary" title="刷新">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
 
-                <button id="btnExport" class="btn btn-sm btn-outline-success">
-                    <i class="bi bi-download me-1"></i>导出列表
-                </button>
-            </div>
+            <button id="btnExport" class="btn btn-sm btn-outline-success" title="导出">
+                <i class="bi bi-download"></i>
+            </button>
         </div>
 
-        <!-- 统计卡片（横向紧凑） -->
-        <div class="col-auto ms-auto">
-            <div class="d-flex gap-2">
-                <div class="stat-compact total">
-                    <h4 id="statTotal">0</h4>
-                    <small>总数</small>
-                </div>
-                <div class="stat-compact pending">
-                    <h4 id="statPending">0</h4>
-                    <small>未整改</small>
-                </div>
-                <div class="stat-compact progress">
-                    <h4 id="statProgress">0</h4>
-                    <small>整改中</small>
-                </div>
-                <div class="stat-compact closed">
-                    <h4 id="statClosed">0</h4>
-                    <small>已销号</small>
-                </div>
+        <div class="toolbar-right">
+            <div class="stat-pill total">
+                <span class="num" id="statTotal">0</span>
+                <span class="label">总数</span>
+            </div>
+            <div class="stat-pill pending">
+                <span class="num" id="statPending">0</span>
+                <span class="label">未整改</span>
+            </div>
+            <div class="stat-pill progress">
+                <span class="num" id="statProgress">0</span>
+                <span class="label">整改中</span>
+            </div>
+            <div class="stat-pill closed">
+                <span class="num" id="statClosed">0</span>
+                <span class="label">已销号</span>
             </div>
         </div>
     </div>
 
-    <!-- 主区域：地图 + 图斑列表 -->
-    <div class="row g-3">
-        <!-- 地图区域 -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-primary">
-                        <i class="bi bi-map me-2"></i>地图展示
-                        <span class="badge bg-secondary ms-2" id="mapCount">0个</span>
-                    </h6>
-                    <!-- 底图切换 -->
-                    <div class="btn-group btn-group-sm" id="basemapControl">
-                        <button type="button" class="btn active" data-layer="vec">
-                            <i class="bi bi-map"></i> 矢量
-                        </button>
-                        <button type="button" class="btn" data-layer="img">
-                            <i class="bi bi-image"></i> 影像
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0 position-relative" id="map-container">
+    <!-- 主体区域 -->
+    <div class="map-page-container">
+        <div class="row g-0" style="height: 100%;">
+            <!-- 地图区域 -->
+            <div class="col-8" style="height: 100%;">
+                <div class="map-main">
                     <div id="map"></div>
 
                     <!-- 加载提示 -->
                     <div class="map-loading" id="mapLoading">
-                        <div class="spinner-border text-primary me-2" role="status"></div>
-                        <span>加载中...</span>
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        <span class="small">加载中...</span>
+                    </div>
+
+                    <!-- 底图切换 -->
+                    <div class="basemap-btns">
+                        <button type="button" class="btn active" data-layer="vec">矢量</button>
+                        <button type="button" class="btn" data-layer="img">影像</button>
                     </div>
 
                     <!-- 图例 -->
-                    <div class="map-legend position-absolute" style="top: 10px; left: 10px; z-index: 1000;">
-                        <div class="legend-item"><span class="legend-dot" style="background: #dc3545;"></span>未整改</div>
-                        <div class="legend-item"><span class="legend-dot" style="background: #ffc107;"></span>整改中</div>
-                        <div class="legend-item"><span class="legend-dot" style="background: #17a2b8;"></span>已整改</div>
-                        <div class="legend-item"><span class="legend-dot" style="background: #28a745;"></span>已销号</div>
+                    <div class="map-legend-inline">
+                        <div class="legend-dot"><span style="background: #dc3545;"></span>未整改</div>
+                        <div class="legend-dot"><span style="background: #ffc107;"></span>整改中</div>
+                        <div class="legend-dot"><span style="background: #17a2b8;"></span>已整改</div>
+                        <div class="legend-dot"><span style="background: #28a745;"></span>已销号</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 图斑列表侧边栏 -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header py-2">
-                    <h6 class="mb-0 fw-bold text-primary">
-                        <i class="bi bi-list-ul me-2"></i>图斑列表
-                        <span class="badge bg-info ms-2" id="listCount">0</span>
-                    </h6>
-                </div>
-                <div class="card-body p-2 tuban-list">
-                    <div id="tubanList" class="list-group list-group-flush">
-                        <!-- 图斑列表项将通过JS动态生成 -->
-                        <div class="text-center py-4 text-muted">
-                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                            <p class="mb-0 mt-2 small">暂无数据</p>
+            <!-- 图斑列表侧边栏 -->
+            <div class="col-4" style="height: 100%;">
+                <div class="tuban-sidebar">
+                    <div class="sidebar-header">
+                        <h6>
+                            <i class="bi bi-list text-primary"></i>
+                            图斑列表
+                            <span class="tuban-count" id="listCount">0</span>
+                        </h6>
+                    </div>
+                    <div class="tuban-items" id="tubanList">
+                        <div class="text-center py-4 text-muted small">
+                            <i class="bi bi-geo-alt" style="font-size: 1.5rem;"></i>
+                            <p class="mb-0 mt-1">选择条件后显示图斑</p>
                         </div>
                     </div>
                 </div>
@@ -290,17 +392,14 @@ let tubanMarkers = [];
 
 // 初始化地图
 function initMap() {
-    // 创建地图实例，中心点设为广西乐业-凤山地区
     map = L.map('map', {
         center: [24.78, 106.56],
         zoom: 10,
         zoomControl: true
     });
 
-    // 添加天地图图层
     addTiandituLayers('vec');
 
-    // 创建标记图层组
     markersLayer = L.markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
@@ -309,31 +408,26 @@ function initMap() {
     });
     map.addLayer(markersLayer);
 
-    // 加载数据
     loadTubans();
     loadStats();
 }
 
 // 添加天地图图层
 function addTiandituLayers(type) {
-    // 清除现有图层
     map.eachLayer(function(layer) {
         if (layer._url && layer._url.includes('tianditu')) {
             map.removeLayer(layer);
         }
     });
 
-    // 底图类型
     const layerType = type === 'img' ? 'img' : 'vec';
     const annoType = type === 'img' ? 'cia' : 'cva';
 
-    // 底图
     L.tileLayer(`http://t{s}.tianditu.gov.cn/${layerType}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layerType}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=${TIANDITU_KEY}`, {
         subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
         maxZoom: 18
     }).addTo(map);
 
-    // 注记层
     L.tileLayer(`http://t{s}.tianditu.gov.cn/${annoType}_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${annoType}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk=${TIANDITU_KEY}`, {
         subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
         maxZoom: 18
@@ -349,29 +443,24 @@ function loadTubans() {
     const problem = document.getElementById('filterProblem').value;
     const event = document.getElementById('filterEvent').value;
 
-    // 构建查询参数
     const params = new URLSearchParams();
     if (status) params.append('rectify_status', status);
     if (zone) params.append('func_zone', zone);
     if (problem) params.append('problem_type', problem);
     if (event) params.append('event_id', event);
 
-    // 显示加载提示
-    document.getElementById('mapLoading').style.display = 'block';
+    document.getElementById('mapLoading').style.display = 'flex';
 
     fetch(`/map/api/tubans?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
-            // 清除现有标记
             markersLayer.clearLayers();
             tubanMarkers = [];
 
-            // 添加新标记
             data.features.forEach(feature => {
                 const coords = feature.geometry.coordinates;
                 const props = feature.properties;
 
-                // 创建圆形标记
                 const marker = L.circleMarker([coords[1], coords[0]], {
                     radius: 10,
                     fillColor: props.color,
@@ -381,33 +470,22 @@ function loadTubans() {
                     fillOpacity: 0.8
                 });
 
-                // 绑定弹窗
                 marker.bindPopup(createPopupContent(props), {
                     maxWidth: 280,
                     className: 'tuban-popup'
                 });
 
-                // 点击标记高亮列表项
                 marker.on('click', function() {
                     highlightListItem(props.id);
-                    // 打开列表详情
-                    showListItemDetail(props.id);
                 });
 
                 markersLayer.addLayer(marker);
-
-                // 保存标记引用
                 tubanMarkers.push({ id: props.id, marker: marker, props: props });
             });
 
-            // 更新列表
             updateTubanList(data.features);
-
-            // 更新地图计数
-            document.getElementById('mapCount').textContent = data.features.length + '个';
             document.getElementById('listCount').textContent = data.features.length;
 
-            // 自动缩放到数据范围
             if (data.features.length > 0) {
                 const bounds = markersLayer.getBounds();
                 if (bounds.isValid()) {
@@ -415,18 +493,16 @@ function loadTubans() {
                 }
             }
 
-            // 检查URL是否有指定图斑ID
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id');
             if (targetId) {
                 highlightAndZoomToTuban(parseInt(targetId));
             }
 
-            // 隐藏加载提示
             document.getElementById('mapLoading').style.display = 'none';
         })
         .catch(error => {
-            console.error('加载图斑数据失败:', error);
+            console.error('加载失败:', error);
             document.getElementById('mapLoading').style.display = 'none';
         });
 }
@@ -441,7 +517,7 @@ function loadStats() {
             document.getElementById('statProgress').textContent = data.in_progress;
             document.getElementById('statClosed').textContent = data.closed;
         })
-        .catch(error => console.error('加载统计数据失败:', error));
+        .catch(error => console.error('加载统计失败:', error));
 }
 
 // 更新图斑列表
@@ -450,9 +526,9 @@ function updateTubanList(features) {
 
     if (features.length === 0) {
         listContainer.innerHTML = `
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                <p class="mb-0 mt-2 small">暂无数据</p>
+            <div class="text-center py-4 text-muted small">
+                <i class="bi bi-geo-alt" style="font-size: 1.5rem;"></i>
+                <p class="mb-0 mt-1">暂无符合条件的数据</p>
             </div>
         `;
         return;
@@ -461,23 +537,20 @@ function updateTubanList(features) {
     let html = '';
     features.forEach(feature => {
         const props = feature.properties;
-        const statusColor = getStatusColorClass(props.rectify_status);
+        const statusClass = getStatusClass(props.rectify_status);
 
         html += `
-            <div class="list-group-item list-group-item-action tuban-item" data-id="${props.id}" onclick="highlightAndZoomToTuban(${props.id})">
+            <div class="tuban-item" data-id="${props.id}" onclick="highlightAndZoomToTuban(${props.id})">
                 <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                        <div class="fw-bold text-primary mb-1" style="font-size: 0.9rem;">
-                            ${props.tuban_code}
-                            ${props.is_superior_focus === '是' ? '<span class="badge bg-danger ms-1" style="font-size: 0.6rem;">重点</span>' : ''}
-                        </div>
-                        <div class="small text-muted mb-1">${props.park_name || '-'}</div>
-                        <div class="small">
-                            <span class="badge ${statusColor}" style="font-size: 0.7rem;">${props.rectify_status}</span>
-                            ${props.problem_type ? `<span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">${props.problem_type}</span>` : ''}
+                    <div>
+                        <div class="code">${props.tuban_code}</div>
+                        <div class="park">${props.park_name || '-'}</div>
+                        <div class="meta">
+                            <span class="badge ${statusClass} status-badge">${props.rectify_status}</span>
+                            ${props.problem_type ? `<span class="badge bg-secondary status-badge">${props.problem_type}</span>` : ''}
+                            ${props.area ? `<span class="text-muted small">${props.area}㎡</span>` : ''}
                         </div>
                     </div>
-                    ${props.area ? `<div class="text-end text-muted small">${props.area}㎡</div>` : ''}
                 </div>
             </div>
         `;
@@ -487,14 +560,14 @@ function updateTubanList(features) {
 }
 
 // 获取状态颜色类名
-function getStatusColorClass(status) {
-    const colorMap = {
+function getStatusClass(status) {
+    const map = {
         '未整改': 'bg-danger',
         '整改中': 'bg-warning text-dark',
         '已整改': 'bg-info',
         '已销号': 'bg-success'
     };
-    return colorMap[status] || 'bg-secondary';
+    return map[status] || 'bg-secondary';
 }
 
 // 高亮并缩放到指定图斑
@@ -502,17 +575,13 @@ function highlightAndZoomToTuban(id) {
     const item = tubanMarkers.find(m => m.id === id);
     if (!item) return;
 
-    // 移除其他高亮
     document.querySelectorAll('.tuban-item').forEach(el => el.classList.remove('active'));
-
-    // 高亮列表项
     const listItem = document.querySelector(`.tuban-item[data-id="${id}"]`);
     if (listItem) {
         listItem.classList.add('active');
         listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // 缩放到标记
     map.setView(item.marker.getLatLng(), 16);
     item.marker.openPopup();
 }
@@ -526,64 +595,77 @@ function highlightListItem(id) {
     }
 }
 
-// 显示列表项详情（可扩展为弹窗）
-function showListItemDetail(id) {
-    const item = tubanMarkers.find(m => m.id === id);
-    if (!item) return;
+// 创建弹窗内容
+function createPopupContent(props) {
+    let badgeClass = 'bg-secondary';
+    if (props.rectify_status === '未整改') badgeClass = 'bg-danger';
+    else if (props.rectify_status === '整改中') badgeClass = 'bg-warning text-dark';
+    else if (props.rectify_status === '已整改') badgeClass = 'bg-info';
+    else if (props.is_closed === '是') badgeClass = 'bg-success';
 
-    // 这里可以添加侧边栏详情展开功能
-    console.log('Show detail for:', item.props);
+    return `
+        <div class="tuban-popup" style="min-width: 200px;">
+            <h6 style="margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid #eee; color: #2E8B57; font-size: 0.9rem;">
+                <i class="bi bi-geo-alt-fill me-1"></i>${props.tuban_code}
+            </h6>
+            <div style="margin-bottom: 6px;">
+                <span class="badge ${badgeClass}">${props.rectify_status}</span>
+                ${props.is_closed === '是' ? '<span class="badge bg-success ms-1">已销号</span>' : ''}
+            </div>
+            <table style="width: 100%; font-size: 0.8rem;">
+                <tr><td class="text-muted" style="width: 60px;">公园</td><td>${props.park_name || '-'}</td></tr>
+                <tr><td class="text-muted">功能区</td><td>${props.func_zone || '-'}</td></tr>
+                <tr><td class="text-muted">问题</td><td>${props.problem_type || '-'}</td></tr>
+                ${props.area ? `<tr><td class="text-muted">面积</td><td>${props.area} ㎡</td></tr>` : ''}
+                ${props.rectify_deadline ? `<tr><td class="text-muted">期限</td><td>${props.rectify_deadline}</td></tr>` : ''}
+            </table>
+            <a href="/tuban/detail/${props.id}" class="btn btn-sm btn-outline-primary w-100 mt-2" style="font-size: 0.75rem;">
+                <i class="bi bi-eye me-1"></i>查看详情
+            </a>
+        </div>
+    `;
 }
-
-// 导出当前列表
-document.getElementById('btnExport')?.addEventListener('click', function() {
-    const items = tubanMarkers.map(m => m.props);
-    if (items.length === 0) {
-        alert('当前没有数据可导出');
-        return;
-    }
-
-    // 简单的CSV导出
-    const headers = ['图斑编号', '地质公园', '功能区', '问题类型', '整改进展'];
-    const csvContent = [
-        headers.join(','),
-        ...items.map(item => [
-            item.tuban_code,
-            item.park_name,
-            item.func_zone,
-            item.problem_type,
-            item.rectify_status
-        ].join(','))
-    ].join('\n');
-
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `图斑列表_${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-});
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
 
-    // 筛选事件
     document.getElementById('filterStatus').addEventListener('change', loadTubans);
     document.getElementById('filterZone').addEventListener('change', loadTubans);
     document.getElementById('filterProblem').addEventListener('change', loadTubans);
     document.getElementById('filterEvent').addEventListener('change', loadTubans);
+
     document.getElementById('btnRefresh').addEventListener('click', function() {
         loadTubans();
         loadStats();
     });
 
     // 底图切换
-    document.querySelectorAll('#basemapControl .btn').forEach(btn => {
+    document.querySelectorAll('#basemapControl .btn, .basemap-btns .btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('#basemapControl .btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.basemap-btns .btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             addTiandituLayers(this.dataset.layer);
         });
+    });
+
+    // 导出
+    document.getElementById('btnExport').addEventListener('click', function() {
+        const items = tubanMarkers.map(m => m.props);
+        if (items.length === 0) {
+            alert('当前没有数据可导出');
+            return;
+        }
+        const headers = ['图斑编号', '地质公园', '功能区', '问题类型', '整改进展'];
+        const csvContent = ['\ufeff' + headers.join(',')].concat(
+            items.map(item => [item.tuban_code, item.park_name, item.func_zone, item.problem_type, item.rectify_status].join(','))
+        ).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `图斑列表_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
     });
 });
 </script>
