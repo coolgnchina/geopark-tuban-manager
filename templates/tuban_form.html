@@ -4,95 +4,141 @@
 
 {% block header %}{{ '编辑图斑' if action == 'edit' else '新增图斑' }}{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tuban.list') }}" class="text-decoration-none">
+                <i class="bi bi-table me-1"></i>图斑管理
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-{{ 'pencil' if action == 'edit' else 'plus' }} me-1"></i>{{ '编辑图斑' if action == 'edit' else '新增图斑' }}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
 <form method="POST" class="needs-validation" novalidate enctype="multipart/form-data" id="tubanForm">
     <div class="row">
         <!-- 基础信息 -->
-        <div class="col-12 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header py-2">
                     <h6 class="m-0 font-weight-bold text-primary">基础信息</h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
+                <div class="card-body p-3">
+                    <div class="form-grid-4">
+                        <div class="form-group">
                             <label for="tuban_code" class="form-label">图斑编号 *</label>
-                            <input type="text" class="form-control" id="tuban_code" name="tuban_code"
+                            <input type="text" class="form-control form-control-sm" id="tuban_code" name="tuban_code"
                                    value="{{ tuban.tuban_code if tuban else '' }}" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="park_name" class="form-label">项目名称 *</label>
-                            <input type="text" class="form-control" id="park_name" name="park_name"
+                            <input type="text" class="form-control form-control-sm" id="park_name" name="park_name"
                                    value="{{ tuban.park_name if tuban else '' }}" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="func_zone" class="form-label">所在功能区</label>
-                            <select class="form-select" id="func_zone" name="func_zone">
+                            <select class="form-select form-select-sm" id="func_zone" name="func_zone">
                                 <option value="">请选择...</option>
                                 {% for func_zone_item in func_zones %}
                                 <option value="{{ func_zone_item.dict_value }}" {% if tuban and tuban.func_zone == func_zone_item.dict_value %}selected{% endif %}>{{ func_zone_item.dict_value }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="facility_name" class="form-label">活动/设施名称</label>
-                            <input type="text" class="form-control" id="facility_name" name="facility_name"
+                            <input type="text" class="form-control form-control-sm" id="facility_name" name="facility_name"
                                    value="{{ tuban.facility_name if tuban else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="longitude" class="form-label">经度</label>
-                            <input type="number" class="form-control" id="longitude" name="longitude" step="0.000001"
+                            <input type="number" class="form-control form-control-sm" id="longitude" name="longitude" step="0.000001"
                                    value="{{ tuban.longitude if tuban else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="latitude" class="form-label">纬度</label>
-                            <input type="number" class="form-control" id="latitude" name="latitude" step="0.000001"
+                            <input type="number" class="form-control form-control-sm" id="latitude" name="latitude" step="0.000001"
                                    value="{{ tuban.latitude if tuban else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="area" class="form-label">占地面积 (平方米)</label>
-                            <input type="number" class="form-control" id="area" name="area" step="0.01"
+                            <input type="number" class="form-control form-control-sm" id="area" name="area" step="0.01"
                                    value="{{ tuban.area if tuban else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="image_date" class="form-label">影像时相</label>
-                            <input type="date" class="form-control" id="image_date" name="image_date"
+                            <input type="date" class="form-control form-control-sm" id="image_date" name="image_date"
                                    value="{{ tuban.image_date.isoformat() if tuban and tuban.image_date else '' }}">
                         </div>
                     </div>
+
+                    <!-- 关联事件（多选） -->
+                    {% if events %}
+                    <div class="mt-3">
+                        <label class="form-label fw-bold small">关联事件 <span class="text-muted fw-normal">(可多选)</span></label>
+                        <div class="event-checkboxes border rounded p-2 bg-light">
+                            {% set linked_ids = linked_event_ids if linked_event_ids is defined else [] %}
+                            {% for event in events %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="event_ids" id="event_{{ event.id }}" value="{{ event.id }}"
+                                       {% if action == 'edit' and event.id in linked_ids %}checked{% endif %}>
+                                <label class="form-check-label" for="event_{{ event.id }}">
+                                    {{ event.event_name }}
+                                    {% if event.event_type %}
+                                    <span class="badge bg-secondary ms-1" style="font-size: 0.7rem;">{{ event.event_type }}</span>
+                                    {% endif %}
+                                    {% if event.issue_date %}
+                                    <span class="text-muted small ms-1">{{ event.issue_date.strftime('%Y-%m-%d') }}</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text small">提示：按住 Ctrl/Cmd 键可多选</div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- 建设主体信息 -->
-        <div class="col-12 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header py-2">
                     <h6 class="m-0 font-weight-bold text-primary">建设主体信息</h6>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                <div class="card-body p-3">
+                    <div class="form-grid-3">
+                        <div class="form-group">
                             <label for="build_unit" class="form-label">建设单位</label>
-                            <input type="text" class="form-control" id="build_unit" name="build_unit"
+                            <input type="text" class="form-control form-control-sm" id="build_unit" name="build_unit"
                                    value="{{ tuban.build_unit if tuban else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="build_time" class="form-label">建设时间</label>
-                            <input type="date" class="form-control" id="build_time" name="build_time"
+                            <input type="date" class="form-control form-control-sm" id="build_time" name="build_time"
                                    value="{{ tuban.build_time.isoformat() if tuban and tuban.build_time else '' }}">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="form-group">
                             <label for="has_approval" class="form-label">是否有审批手续</label>
-                            <select class="form-select" id="has_approval" name="has_approval">
+                            <select class="form-select form-select-sm" id="has_approval" name="has_approval">
                                 <option value="">请选择...</option>
                                 <option value="是" {% if tuban and tuban.has_approval == '是' %}selected{% endif %}>是</option>
                                 <option value="否" {% if tuban and tuban.has_approval == '否' %}selected{% endif %}>否</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3" id="approval_no_group" style="{% if not tuban or tuban.has_approval != '是' %}display: none;{% endif %}">
+                        <div class="form-group" id="approval_no_group" style="{% if not tuban or tuban.has_approval != '是' %}display: none;{% endif %}">
                             <label for="approval_no" class="form-label">审批文号</label>
-                            <input type="text" class="form-control" id="approval_no" name="approval_no"
+                            <input type="text" class="form-control form-control-sm" id="approval_no" name="approval_no"
                                    value="{{ tuban.approval_no if tuban else '' }}">
                         </div>
                     </div>

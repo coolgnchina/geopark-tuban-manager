@@ -54,3 +54,13 @@ temp/
 # Environment variables
 .env
 .env.local
+
+# Claude AI
+.claude/
+.serena/
+.spec-workflow/
+
+# Search UI
+search_ui.py
+cookies.txt
+tmpclaude-*

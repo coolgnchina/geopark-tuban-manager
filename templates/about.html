@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}关于系统 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}关于系统{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-info-circle me-1"></i>关于
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="page-header">
+        <h2 class="h5 mb-0 fw-bold text-primary">
+            <i class="bi bi-info-circle me-2"></i>关于系统
+        </h2>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header py-3 text-center">
+                    <i class="bi bi-geo-fill text-primary" style="font-size: 3rem;"></i>
+                    <h4 class="mt-2 mb-0">地质公园疑似违法图斑管理系统</h4>
+                    <p class="text-muted mb-0">版本 1.0.0</p>
+                </div>
+                <div class="card-body">
+                    <h5 class="border-bottom pb-2 mb-3">系统简介</h5>
+                    <p class="text-muted">
+                        本系统是用于管理地质公园内疑似违法图斑的Web应用，提供图斑录入、整改跟踪、统计分析和事件管理等功能。
+                    </p>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">技术栈</h5>
+                    <ul class="text-muted">
+                        <li>后端：Python + Flask</li>
+                        <li>数据库：SQLite + SQLAlchemy</li>
+                        <li>前端：Bootstrap 5 + jQuery</li>
+                        <li>图表：Chart.js</li>
+                    </ul>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">主要功能</h5>
+                    <ul class="text-muted">
+                        <li>图斑信息管理（新增、编辑、删除、导入导出）</li>
+                        <li>整改跟踪记录</li>
+                        <li>事件关联管理（卫片下发、专项督查等）</li>
+                        <li>统计分析与可视化</li>
+                        <li>地图位置展示</li>
+                    </ul>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">系统信息</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="text-muted" style="width: 150px;">开发环境</td>
+                            <td>Python 3.8+ / Flask 2.3.0</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">数据库</td>
+                            <td>SQLite</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">前端框架</td>
+                            <td>Bootstrap 5.3</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="card-footer text-center py-3 text-muted small">
+                    <i class="bi bi-c-circle"></i> 2025 地质公园管理系统
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,813 +4,502 @@
 
 {% block header %}图斑详情{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('tuban.list') }}" class="text-decoration-none">
+                <i class="bi bi-table me-1"></i>图斑管理
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-eye me-1"></i>{{ tuban.tuban_code }}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<!-- 基本信息 -->
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">基础信息</h6>
+<div class="content-wrapper">
+    <!-- 1. 标题栏 -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('tuban.list') }}" class="btn btn-link text-secondary p-0 me-3 text-decoration-none">
+                    <i class="bi bi-arrow-left fs-5"></i>
+                </a>
                 <div>
-                    <a href="{{ url_for('tuban.edit', id=tuban.id) }}" class="btn btn-sm btn-warning">
-                        <i class="bi bi-pencil"></i> 编辑
-                    </a>
-                    <button type="button" class="btn btn-sm btn-danger ms-2"
-                        onclick="if(confirmDelete()) location.href='{{ url_for('tuban.delete', id=tuban.id) }}'">
-                        <i class="bi bi-trash"></i> 删除
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <h4 class="mb-0 fw-bold text-dark font-monospace">{{ tuban.tuban_code }}</h4>
+                        <span class="badge bg-{{ get_status_color(tuban.rectify_status) }} rounded-1">{{ tuban.rectify_status }}</span>
+                        {% if tuban.is_superior_focus == '是' %}
+                        <span class="badge bg-danger rounded-1"><i class="bi bi-star-fill"></i> 重点</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-1 small text-muted">
+                        <span class="fw-bold text-dark">{{ tuban.park_name }}</span>
+                        <span class="border-start ps-2">{{ tuban.func_zone }}</span>
+                        {% if tuban.is_punished == '是' %}
+                        <span class="badge bg-danger ms-2">处罚中</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">图斑编号</div>
-                            <div class="detail-value">{{ tuban.tuban_code }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">项目名称</div>
-                            <div class="detail-value">{{ tuban.park_name }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">所在功能区</div>
-                            <div class="detail-value">{{ tuban.func_zone }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">活动/设施名称</div>
-                            <div class="detail-value">{{ tuban.facility_name }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">经纬度</div>
-                            <div class="detail-value">
-                                {% if tuban.longitude and tuban.latitude %}
-                                {{ "%.6f"|format(tuban.longitude) }}, {{ "%.6f"|format(tuban.latitude) }}
-                                {% else %}
-                                -
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">占地面积</div>
-                            <div class="detail-value">{{ tuban.area }} 平方米{% if tuban.area %}{% endif %}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">影像时相</div>
-                            <div class="detail-value">{{ format_date(tuban.image_date) }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">建设单位</div>
-                            <div class="detail-value">{{ tuban.build_unit or '-' }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">建设时间</div>
-                            <div class="detail-value">{{ format_date(tuban.build_time) }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">是否有审批手续</div>
-                            <div class="detail-value">
-                                <span class="badge bg-{{ get_status_color(tuban.has_approval) }}">{{ tuban.has_approval
-                                    }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    {% if tuban.approval_no %}
-                    <div class="col-md-6 mb-3">
-                        <div class="detail-item">
-                            <div class="detail-label">审批文号</div>
-                            <div class="detail-value">{{ tuban.approval_no }}</div>
-                        </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('tuban.edit', id=tuban.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil me-1"></i>编辑
+                </a>
+                <button type="button" class="btn btn-outline-danger btn-sm"
+                    onclick="if(confirmDelete()) location.href='{{ url_for('tuban.delete', id=tuban.id) }}'">
+                    <i class="bi bi-trash me-1"></i>删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关联事件 -->
+    {% set events_list = tuban.events.all() %}
+    {% if events_list %}
+    <div class="mb-3">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="fw-bold text-primary small"><i class="bi bi-calendar-event me-1"></i>关联事件：</span>
+            {% for event in events_list %}
+            <span class="badge bg-primary rounded-1">
+                <i class="bi bi-tag me-1"></i>{{ event.event_name }}
+                {% if event.issue_date %}
+                <span class="opacity-75 ms-1">{{ event.issue_date.strftime('%Y-%m-%d') }}</span>
+                {% endif %}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 2. 横向信息表格（充分利用宽度） -->
+    <div class="row g-3">
+        <!-- 基础信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>基础信息</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 100px;" class="table-light">项目名称</th>
+                                <td style="width: 25%;">{{ tuban.park_name }}</td>
+                                <th style="width: 90px;" class="table-light">设施名称</th>
+                                <td style="width: 25%;">{{ tuban.facility_name }}</td>
+                                <th style="width: 90px;" class="table-light">功能分区</th>
+                                <td>{{ tuban.func_zone }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">占地面积</th>
+                                <td>{{ tuban.area }} <span class="text-secondary small">m²</span></td>
+                                <th class="table-light">建设时间</th>
+                                <td>{{ format_date(tuban.build_time) }}</td>
+                                <th class="table-light">影像时相</th>
+                                <td>{{ format_date(tuban.image_date) }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">地理坐标</th>
+                                <td colspan="3">
+                                    {% if tuban.longitude %}
+                                    {{ "%.4f"|format(tuban.longitude) }}, {{ "%.4f"|format(tuban.latitude) }}
+                                    <a href="/map?id={{ tuban.id }}" target="_blank" class="ms-1 text-decoration-none">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>查看地图
+                                    </a>
+                                    {% else %}-{% endif %}
+                                </td>
+                                <th class="table-light">合规情况</th>
+                                <td>
+                                    <span class="{{ 'text-success' if tuban.has_approval == '是' else 'text-danger' }} fw-bold">
+                                        <i class="bi {{ 'bi-check-circle' if tuban.has_approval == '是' else 'bi-x-circle' }} me-1"></i>{{ tuban.has_approval }}
+                                    </span>
+                                    {% if tuban.has_approval == '是' and tuban.approval_no %}
+                                    <span class="text-muted small ms-2">文号: {{ tuban.approval_no }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">建设单位</th>
+                                <td colspan="5">{{ tuban.build_unit or '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发现核查 + 问题违法（2列布局） -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-search me-2"></i>发现与核查</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 90px;" class="table-light">发现来源</th>
+                                <td>{{ tuban.discover_method }}</td>
+                                <th style="width: 80px;" class="table-light">发现时间</th>
+                                <td>{{ format_date(tuban.discover_time) }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">核查人员</th>
+                                <td>{{ tuban.check_person }}</td>
+                                <th class="table-light">核查时间</th>
+                                <td>{{ format_date(tuban.check_time) }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">核查结论</th>
+                                <td colspan="3" class="fw-bold">{{ tuban.check_result or '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-exclamation-triangle me-2"></i>问题与违法</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">问题类型</th>
+                                <td>{{ tuban.problem_type }}</td>
+                                <th style="width: 70px;" class="table-light">影响程度</th>
+                                <td style="width: 90px;">
+                                    {% set impact_colors = {'严重': 'danger', '较重': 'warning', '一般': 'info', '轻微': 'success'} %}
+                                    {% set color = impact_colors.get(tuban.impact_level, 'secondary') %}
+                                    <span class="badge bg-{{ color }}">{{ tuban.impact_level or '-' }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">是否违法</th>
+                                <td>
+                                    <span class="{{ 'text-danger' if tuban.is_illegal == '是' else 'text-success' }} fw-bold">
+                                        <i class="bi {{ 'bi-x-circle' if tuban.is_illegal == '是' else 'bi-check-circle' }} me-1"></i>{{ tuban.is_illegal or '-' }}
+                                    </span>
+                                </td>
+                                <th class="table-light">上级关注</th>
+                                <td>
+                                    <span class="{{ 'text-danger' if tuban.is_superior_focus == '是' else 'text-muted' }}">
+                                        <i class="bi {{ 'bi-star-fill' if tuban.is_superior_focus == '是' else 'bi-circle' }} me-1"></i>{{ tuban.is_superior_focus or '-' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">违反条款</th>
+                                <td colspan="3">{{ tuban.violated_law or '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 问题描述 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-text-paragraph me-2"></i>问题描述</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ tuban.problem_desc or '暂无描述' }}</p>
+                    {% if tuban.geo_heritage_type %}
+                    <div class="mt-2">
+                        <span class="badge bg-info">涉及地质遗迹: {{ tuban.geo_heritage_type }}</span>
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">状态信息</h6>
-            </div>
-            <div class="card-body">
-                <div class="detail-item mb-3">
-                    <div class="detail-label">问题类型</div>
-                    <div class="detail-value">
-                        <span class="badge bg-primary fs-6">{{ tuban.problem_type }}</span>
-                    </div>
-                </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">影响程度</div>
-                    <div class="detail-value">
-                        <span class="badge bg-{{ get_status_color(tuban.impact_level) }} fs-6">{{ tuban.impact_level
-                            }}</span>
-                    </div>
-                </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">上级关注</div>
-                    <div class="detail-value">
-                        {% if tuban.is_superior_focus == '是' %}
-                        <span class="badge bg-danger fs-6">✓ 重点</span>
-                        {% else %}
-                        <span class="text-muted">一般</span>
+
+        <!-- 整改信息 -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-arrow-repeat me-2"></i>整改信息</h6>
+                    {% if tuban.rectify_deadline %}
+                        {% set is_overdue = tuban.rectify_deadline < get_current_date() and tuban.rectify_status in ['未整改', '整改中'] %}
+                        {% if is_overdue %}
+                        <span class="badge bg-danger">已超期</span>
                         {% endif %}
-                    </div>
+                    {% endif %}
                 </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">整改进展</div>
-                    <div class="detail-value">
-                        <span class="badge bg-{{ get_status_color(tuban.rectify_status) }} fs-6">{{ tuban.rectify_status
-                            }}</span>
-                    </div>
-                </div>
-                {% if is_overdue %}
-                <div class="alert alert-danger mb-3">
-                    <i class="bi bi-exclamation-triangle-fill"></i> 已超期 {{ overdue_days }} 天！
-                </div>
-                {% elif tuban.rectify_deadline %}
-                <div class="detail-item mb-3">
-                    <div class="detail-label">整改期限</div>
-                    <div
-                        class="detail-value text-{{ 'danger' if tuban.rectify_deadline < get_current_date() else 'dark' }}">
-                        {{ format_date(tuban.rectify_deadline) }}
-                    </div>
-                </div>
-                {% endif %}
-                <div class="detail-item mb-3">
-                    <div class="detail-label">是否销号</div>
-                    <div class="detail-value">
-                        <span class="badge bg-{{ get_status_color(tuban.is_closed) }}">{{ tuban.is_closed }}</span>
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">整改措施</th>
+                                <td colspan="3">{{ tuban.rectify_measure or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">整改时限</th>
+                                <td style="width: 20%;">
+                                    {% if tuban.rectify_deadline %}
+                                        <span class="{{ 'text-danger fw-bold' if is_overdue else '' }}">{{ format_date(tuban.rectify_deadline) }}</span>
+                                    {% else %}-{% endif %}
+                                </td>
+                                <th style="width: 80px;" class="table-light">责任部门</th>
+                                <td>{{ tuban.responsible_dept or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">验收时间</th>
+                                <td>{{ format_date(tuban.rectify_verify_time) }}</td>
+                                <th style="width: 80px;" class="table-light">验收人员</th>
+                                <td>{{ tuban.verify_person or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">销号状态</th>
+                                <td>
+                                    <span class="{{ 'text-success' if tuban.is_closed == '是' else 'text-secondary' }} fw-bold">
+                                        <i class="bi {{ 'bi-check-circle' if tuban.is_closed == '是' else 'bi-circle' }} me-1"></i>{{ tuban.is_closed or '否' }}
+                                    </span>
+                                </td>
+                                <th colspan="2"></th>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- 问题与违法信息 -->
-<div class="row">
-    <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">发现与核查信息</h6>
+        <!-- 处罚信息 -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-gavel me-2"></i>处罚信息</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 80px;" class="table-light">是否处罚</th>
+                                <td>
+                                    <span class="{{ 'text-danger' if tuban.is_punished == '是' else 'text-success' }} fw-bold">
+                                        <i class="bi {{ 'bi-x-circle' if tuban.is_punished == '是' else 'bi-check-circle' }} me-1"></i>{{ tuban.is_punished or '-' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">处罚形式</th>
+                                <td>{{ tuban.punish_type or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">罚款金额</th>
+                                <td>{{ tuban.fine_amount or '-' }} <span class="text-secondary">万元</span></td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">处罚文书号</th>
+                                <td>{{ tuban.punish_doc_no or '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row" <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">发现时间</div>
-                        <div class="detail-value">{{ format_date(tuban.discover_time) }}</div>
-                    </div>
+        </div>
+
+        <!-- 管理信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-gear me-2"></i>管理信息</h6>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">发现方式</div>
-                        <div class="detail-value">{{ tuban.discover_method }}</div>
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 120px;" class="table-light">台账来源</th>
+                                <td style="width: 25%;">{{ tuban.data_source or '-' }}</td>
+                                <th style="width: 120px;" class="table-light">是否为巡查点</th>
+                                <td style="width: 25%;">
+                                    <span class="{{ 'text-success' if tuban.is_patrol_point == '是' else 'text-secondary' }}">
+                                        <i class="bi {{ 'bi-check-circle' if tuban.is_patrol_point == '是' else 'bi-circle' }} me-1"></i>{{ tuban.is_patrol_point or '否' }}
+                                    </span>
+                                </td>
+                                <th style="width: 120px;" class="table-light">附件材料</th>
+                                <td>
+                                    {% if tuban.attachments %}
+                                        {% set attachment_list = tuban.attachments.split(',') %}
+                                        {% for att in attachment_list %}
+                                            {% if att.strip() %}
+                                            <a href="{{ url_for('tuban.download_attachment', filename=att.strip()) }}" class="btn btn-outline-primary btn-sm me-1 mb-1" target="_blank">
+                                                <i class="bi bi-file-earmark me-1"></i>{{ att.strip() }}
+                                            </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">现场核查时间</div>
-                        <div class="detail-value">{{ format_date(tuban.check_time) }}</div>
-                    </div>
+            </div>
+        </div>
+
+        <!-- 底部：照片 + 整改记录 + 快捷操作（3列布局） -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-image me-2"></i>现场照片</h6>
+                    <button class="btn btn-link btn-sm p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">上传</button>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">核查人员</div>
-                        <div class="detail-value">{{ tuban.check_person }}</div>
+                <div class="card-body p-2">
+                    {% if photos %}
+                        <div class="row g-2">
+                            {% for photo in photos %}
+                            <div class="col-4">
+                                <img src="{{ url_for('tuban.images', filename=photo.filename) }}" class="img-thumbnail w-100" style="aspect-ratio: 1; object-fit: cover;" alt="现场照片">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3 text-muted small">
+                            <i class="bi bi-camera" style="font-size: 1.5rem;"></i>
+                            <p class="mb-0 mt-1">暂无照片</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-clock-history me-2"></i>整改记录</h6>
+                </div>
+                <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                    {% if rectify_records %}
+                        <div class="timeline">
+                            {% for record in rectify_records %}
+                            <div class="timeline-item {{ 'warning' if record.status == '整改中' else ('danger' if record.status == '延期' else '') }}">
+                                <div class="timeline-time">{{ format_date(record.record_time) }}</div>
+                                <div class="timeline-content">
+                                    <div class="fw-bold">{{ record.status }}</div>
+                                    <div class="small text-muted">{{ record.content }}</div>
+                                    {% if record.operator %}
+                                    <div class="small mt-1"><i class="bi bi-person me-1"></i>{{ record.operator }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3 text-muted small">暂无整改记录</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-lightning me-2"></i>快捷操作</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#addRecordModal">
+                            <i class="bi bi-plus-circle me-1"></i>添加整改记录
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                            <i class="bi bi-camera me-1"></i>上传现场照片
+                        </button>
+                        <a href="/map?id={{ tuban.id }}" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-geo-alt me-1"></i>查看地图位置
+                        </a>
                     </div>
                 </div>
             </div>
-            {% if tuban.check_result %}
-            <div class="detail-item">
-                <div class="detail-label">核查结论</div>
-                <div class="detail-value">{{ tuban.check_result }}</div>
+            {% if tuban.remark %}
+            <div class="card mt-3">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-chat-left-text me-2"></i>备注</h6>
+                </div>
+                <div class="card-body p-2">
+                    <p class="mb-0 small">{{ tuban.remark }}</p>
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
-<div class="col-lg-6">
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">处罚信息</h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">是否处罚</div>
-                        <div class="detail-value">
-                            <span class="badge bg-{{ get_status_color(tuban.is_punished) }}">{{ tuban.is_punished
-                                }}</span>
-                        </div>
-                    </div>
-                </div>
-                {% if tuban.is_punished == '是' %}
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">处罚形式</div>
-                        <div class="detail-value">{{ tuban.punish_type }}</div>
-                    </div>
-                </div>
-                {% if tuban.fine_amount %}
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">罚款金额</div>
-                        <div class="detail-value">{{ tuban.fine_amount }} 万元</div>
-                    </div>
-                </div>
-                {% endif %}
-                {% if tuban.punish_doc_no %}
-                <div class="col-md-6 mb-3">
-                    <div class="detail-item">
-                        <div class="detail-label">处罚文书编号</div>
-                        <div class="detail-value">{{ tuban.punish_doc_no }}</div>
-                    </div>
-                </div>
-                {% endif %}
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-</div>
 
-<!-- 问题描述 -->
-{% if tuban.problem_desc %}
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">问题描述</h6>
-    </div>
-    <div class="card-body">
-        <p class="mb-0">{{ tuban.problem_desc }}</p>
-    </div>
-</div>
-{% endif %}
-
-<!-- 资料照片 -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">
-            <i class="bi bi-images me-2"></i>资料照片
-        </h6>
-        <div>
-            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                data-bs-target="#uploadPhotoModal">
-                <i class="bi bi-upload me-1"></i>上传现场照片
-            </button>
-            <button type="button" class="btn btn-sm btn-info ms-1" data-bs-toggle="modal"
-                data-bs-target="#uploadSatelliteModal">
-                <i class="bi bi-globe me-1"></i>上传卫片
-            </button>
-        </div>
-    </div>
-    <div class="card-body">
-        <!-- 现场照片区域 -->
-        <div class="mb-4">
-            <h6 class="text-muted border-bottom pb-2 mb-3">
-                <i class="bi bi-camera me-1"></i>现场照片
-            </h6>
-            <div class="row g-3" id="photoGallery">
-                <div class="col-12 text-center text-muted py-4" id="noPhotosHint">
-                    <i class="bi bi-image fs-1 d-block mb-2"></i>
-                    暂无现场照片，点击上方按钮上传
-                </div>
-            </div>
-        </div>
-
-        <!-- 卫星影像区域 -->
-        <div>
-            <h6 class="text-muted border-bottom pb-2 mb-3">
-                <i class="bi bi-globe2 me-1"></i>卫星影像
-            </h6>
-            <div class="row g-3" id="satelliteGallery">
-                <div class="col-12 text-center text-muted py-4" id="noSatellitesHint">
-                    <i class="bi bi-globe fs-1 d-block mb-2"></i>
-                    暂无卫星影像，点击上方按钮上传
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 图片预览弹窗 -->
-<div class="modal fade" id="imagePreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="previewTitle">图片预览</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center p-0">
-                <img id="previewImage" src="" class="img-fluid" style="max-height: 70vh;">
-            </div>
-            <div class="modal-footer justify-content-between">
-                <small class="text-muted" id="previewInfo"></small>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-    .image-card {
-        position: relative;
-        border-radius: 8px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .image-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .image-card img {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-    }
-
-    .image-card.satellite img {
-        height: 200px;
-    }
-
-    .image-card .delete-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-    .image-card:hover .delete-btn {
-        opacity: 1;
-    }
-
-    .image-card .image-info {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 8px;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-        color: white;
-        font-size: 0.8rem;
-    }
-</style>
-
-<!-- 整改信息 -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">整改信息</h6>
-        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addRecordModal">
-            <i class="bi bi-plus-circle"></i> 添加跟踪记录
-        </button>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <div class="detail-item">
-                    <div class="detail-label">整改措施</div>
-                    <div class="detail-value">{{ tuban.rectify_measure or '-' }}</div>
-                </div>
-            </div>
-            {% if tuban.verify_person %}
-            <div class="col-md-6 mb-3">
-                <div class="detail-item">
-                    <div class="detail-label">验收人员</div>
-                    <div class="detail-value">{{ tuban.verify_person }}</div>
-                </div>
-            </div>
-            {% endif %}
-            {% if tuban.rectify_verify_time %}
-            <div class="col-md-6 mb-3">
-                <div class="detail-item">
-                    <div class="detail-label">整改验收时间</div>
-                    <div class="detail-value">{{ format_date(tuban.rectify_verify_time) }}</div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- 整改跟踪记录 -->
-        {% if rectify_records %}
-        <hr class="my-4">
-        <h6 class="text-muted mb-3">整改跟踪记录</h6>
-        <div class="timeline">
-            {% for record in rectify_records %}
-            <div
-                class="timeline-item {{ 'success' if record.status == '已整改' else 'warning' if record.status == '整改中' else 'danger' }}">
-                <div class="timeline-content">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="mb-0">
-                            <span class="badge bg-{{ get_status_color(record.status) }}">{{ record.status }}</span>
-                        </h6>
-                        <div class="text-muted">
-                            <i class="bi bi-clock"></i> {{ format_date(record.record_time) }}
-                        </div>
-                    </div>
-                    <p class="mb-2">{{ record.content }}</p>
-                    <div class="text-muted">
-                        <i class="bi bi-person"></i> 操作人：{{ record.operator }}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- 其他信息 -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">管理信息</h6>
-            </div>
-            <div class="card-body">
-                <div class="detail-item mb-3">
-                    <div class="detail-label">台账来源</div>
-                    <div class="detail-value">{{ tuban.data_source or '-' }}</div>
-                </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">是否为巡查点</div>
-                    <div class="detail-value">
-                        <span class="badge bg-{{ get_status_color(tuban.is_patrol_point) }}">{{ tuban.is_patrol_point
-                            }}</span>
-                    </div>
-                </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">责任部门/责任人</div>
-                    <div class="detail-value">{{ tuban.responsible_dept or '-' }}</div>
-                </div>
-                {% if tuban.attachments %}
-                <div class="detail-item mb-3">
-                    <div class="detail-label">附件材料</div>
-                    <div class="detail-value">
-                        {% set attachments = tuban.attachments.split(',') %}
-                        {% for attachment in attachments %}
-                        <div class="mb-2">
-                            <a href="{{ url_for('tuban.download_attachment', filename=attachment) }}"
-                                class="btn btn-sm btn-outline-primary" download>
-                                <i class="bi bi-download"></i> 下载附件
-                            </a>
-                            <span class="text-muted ms-2">{{ attachment }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                {% if tuban.remark %}
-                <div class="detail-item mb-3">
-                    <div class="detail-label">备注</div>
-                    <div class="detail-value">{{ tuban.remark }}</div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">系统信息</h6>
-            </div>
-            <div class="card-body">
-                <div class="detail-item mb-3">
-                    <div class="detail-label">创建时间</div>
-                    <div class="detail-value">{{ format_datetime(tuban.created_at) }}</div>
-                </div>
-                <div class="detail-item mb-3">
-                    <div class="detail-label">最后更新</div>
-                    <div class="detail-value">{{ format_datetime(tuban.updated_at) }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // 页面加载完成后的初始化
-    document.addEventListener('DOMContentLoaded', function () {
-        // 添加表单提交事件监听
-        const form = document.querySelector('#addRecordForm');
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                const status = document.getElementById('record_status').value;
-                const content = document.getElementById('record_content').value.trim();
-                const operator = document.getElementById('record_operator').value.trim();
-
-                if (!content) {
-                    e.preventDefault();
-                    alert('请输入跟踪内容');
-                    return;
-                }
-
-                if (!operator) {
-                    e.preventDefault();
-                    alert('请输入操作人');
-                    return;
-                }
-
-                if (status === '已整改' && !confirm('确认要将状态更改为"已整改"吗？')) {
-                    e.preventDefault();
-                }
-            });
-        }
-    });
-</script>
-{% endblock %}
-
-{% block modals %}
-<!-- 添加跟踪记录模态框 -->
-<div class="modal fade" id="addRecordModal" tabindex="-1">
+<!-- 上传照片模态框 -->
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="addRecordForm" method="POST" action="{{ url_for('tuban.add_rectify_record', id=tuban.id) }}">
-                <div class="modal-header">
-                    <h5 class="modal-title">添加整改跟踪记录</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title"><i class="bi bi-camera me-2"></i>上传现场照片</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('tuban.upload_image', id=tuban.id, type='photo') }}" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="record_status" class="form-label">整改状态 *</label>
-                        <select class="form-select" id="record_status" name="status" required>
-                            <option value="">请选择...</option>
-                            <option value="未整改">未整改</option>
-                            <option value="整改中">整改中</option>
-                            <option value="已整改">已整改</option>
-                        </select>
+                        <label for="photo" class="form-label">选择照片</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
                     </div>
                     <div class="mb-3">
-                        <label for="record_content" class="form-label">跟踪内容 *</label>
-                        <textarea class="form-control" id="record_content" name="content" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="record_operator" class="form-label">操作人 *</label>
-                        <input type="text" class="form-control" id="record_operator" name="operator" required>
+                        <label for="photo_desc" class="form-label">照片描述</label>
+                        <input type="text" class="form-control" id="photo_desc" name="description" placeholder="可选">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary btn-sm">上传</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- 上传现场照片弹窗 -->
-<div class="modal fade" id="uploadPhotoModal" tabindex="-1">
+<!-- 添加整改记录模态框 -->
+<div class="modal fade" id="addRecordModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-camera me-2"></i>上传现场照片</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-success text-white py-2">
+                <h6 class="modal-title"><i class="bi bi-plus-circle me-2"></i>添加整改记录</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">选择图片 *</label>
-                    <input type="file" class="form-control" id="photoFile" accept="image/*" required>
-                    <small class="text-muted">支持 JPG/PNG/GIF/BMP，最大 5MB</small>
+            <form method="POST" action="{{ url_for('tuban.add_rectify_record', id=tuban.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="record_status" class="form-label">整改状态</label>
+                        <select class="form-select form-select-sm" id="record_status" name="status" required>
+                            <option value="整改中">整改中</option>
+                            <option value="已整改">已整改</option>
+                            <option value="延期">延期</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="record_desc" class="form-label">整改说明</label>
+                        <textarea class="form-control form-control-sm" id="record_desc" name="content" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="record_person" class="form-label">记录人</label>
+                        <input type="text" class="form-control form-control-sm" id="record_person" name="operator" value="{{ session.username }}">
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">图片说明</label>
-                    <input type="text" class="form-control" id="photoDescription" placeholder="如：整改前现场照片">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success btn-sm">添加记录</button>
                 </div>
-                <div id="photoPreviewContainer" class="text-center" style="display:none;">
-                    <img id="photoPreview" class="img-fluid rounded" style="max-height: 200px;">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="uploadImage('photo')">
-                    <i class="bi bi-upload me-1"></i>上传
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 上传卫片弹窗 -->
-<div class="modal fade" id="uploadSatelliteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-globe me-2"></i>上传卫星影像</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">选择图片 *</label>
-                    <input type="file" class="form-control" id="satelliteFile" accept="image/*" required>
-                    <small class="text-muted">支持 JPG/PNG/GIF/BMP，最大 5MB</small>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">图片说明</label>
-                    <input type="text" class="form-control" id="satelliteDescription" placeholder="如：2024年6月卫片">
-                </div>
-                <div id="satellitePreviewContainer" class="text-center" style="display:none;">
-                    <img id="satellitePreview" class="img-fluid rounded" style="max-height: 200px;">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-info" onclick="uploadImage('satellite')">
-                    <i class="bi bi-upload me-1"></i>上传
-                </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 {% endblock %}
-
-<script>
-    // 图片管理功能
-    const TUBAN_ID = {{ tuban.id }};
-
-    // 页面加载时获取图片列表
-    document.addEventListener('DOMContentLoaded', function () {
-        loadImages();
-
-        // 图片预览
-        document.getElementById('photoFile').addEventListener('change', function (e) {
-            previewFile(e.target, 'photoPreview', 'photoPreviewContainer');
-        });
-        document.getElementById('satelliteFile').addEventListener('change', function (e) {
-            previewFile(e.target, 'satellitePreview', 'satellitePreviewContainer');
-        });
-    });
-
-    // 预览选中的文件
-    function previewFile(input, previewId, containerId) {
-        const file = input.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                document.getElementById(previewId).src = e.target.result;
-                document.getElementById(containerId).style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    // 加载图片列表
-    function loadImages() {
-        fetch(`/tuban/${TUBAN_ID}/images`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    renderPhotos(data.photos);
-                    renderSatellites(data.satellites);
-                }
-            })
-            .catch(error => console.error('加载图片失败:', error));
-    }
-
-    // 渲染现场照片
-    function renderPhotos(photos) {
-        const gallery = document.getElementById('photoGallery');
-        const hint = document.getElementById('noPhotosHint');
-
-        if (photos.length === 0) {
-            hint.style.display = 'block';
-            return;
-        }
-
-        hint.style.display = 'none';
-        gallery.innerHTML = photos.map(img => createImageCard(img, 'photo')).join('');
-    }
-
-    // 渲染卫片
-    function renderSatellites(satellites) {
-        const gallery = document.getElementById('satelliteGallery');
-        const hint = document.getElementById('noSatellitesHint');
-
-        if (satellites.length === 0) {
-            hint.style.display = 'block';
-            return;
-        }
-
-        hint.style.display = 'none';
-        gallery.innerHTML = satellites.map(img => createImageCard(img, 'satellite')).join('');
-    }
-
-    // 创建图片卡片HTML
-    function createImageCard(img, type) {
-        const colClass = type === 'satellite' ? 'col-md-6' : 'col-6 col-md-3';
-        const uploadTime = img.uploaded_at ? new Date(img.uploaded_at).toLocaleDateString('zh-CN') : '';
-
-        return `
-        <div class="${colClass}">
-            <div class="image-card ${type}" onclick="previewImage('${img.filename}', '${img.original_name || ''}', '${uploadTime}')">
-                <img src="/tuban/images/${img.filename}" alt="${img.description || '图片'}">
-                <button type="button" class="btn btn-sm btn-danger delete-btn" 
-                        onclick="event.stopPropagation(); deleteImage(${img.id})">
-                    <i class="bi bi-trash"></i>
-                </button>
-                <div class="image-info">
-                    ${img.description || uploadTime || ''}
-                </div>
-            </div>
-        </div>
-    `;
-    }
-
-    // 上传图片
-    function uploadImage(type) {
-        const fileInput = document.getElementById(type === 'photo' ? 'photoFile' : 'satelliteFile');
-        const descInput = document.getElementById(type === 'photo' ? 'photoDescription' : 'satelliteDescription');
-
-        if (!fileInput.files[0]) {
-            alert('请选择图片文件');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        formData.append('image_type', type);
-        formData.append('description', descInput.value);
-
-        fetch(`/tuban/${TUBAN_ID}/images`, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // 关闭弹窗
-                    const modalId = type === 'photo' ? 'uploadPhotoModal' : 'uploadSatelliteModal';
-                    bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
-
-                    // 清空表单
-                    fileInput.value = '';
-                    descInput.value = '';
-                    document.getElementById(type + 'PreviewContainer').style.display = 'none';
-
-                    // 刷新图片列表
-                    loadImages();
-
-                    alert('上传成功！');
-                } else {
-                    alert('上传失败：' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('上传失败:', error);
-                alert('上传失败，请重试');
-            });
-    }
-
-    // 删除图片
-    function deleteImage(imageId) {
-        if (!confirm('确定要删除这张图片吗？')) {
-            return;
-        }
-
-        fetch(`/tuban/images/${imageId}`, {
-            method: 'DELETE'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadImages();
-                } else {
-                    alert('删除失败：' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('删除失败:', error);
-                alert('删除失败，请重试');
-            });
-    }
-
-    // 预览大图
-    function previewImage(filename, originalName, uploadTime) {
-        document.getElementById('previewImage').src = '/tuban/images/' + filename;
-        document.getElementById('previewTitle').textContent = originalName || '图片预览';
-        document.getElementById('previewInfo').textContent = uploadTime ? '上传时间：' + uploadTime : '';
-
-        new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
-    }
-</script>

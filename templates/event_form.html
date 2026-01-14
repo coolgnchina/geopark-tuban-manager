@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '编辑事件' if action == 'edit' else '新增事件' }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}{{ '编辑事件' if action == 'edit' else '新增事件' }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('event.list') }}" class="text-decoration-none">
+                <i class="bi bi-calendar-event me-1"></i>事件管理
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-{{ 'pencil' if action == 'edit' else 'plus' }} me-1"></i>{{ '编辑事件' if action == 'edit' else '新增事件' }}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0 fw-bold text-primary">
+                <i class="bi bi-{{ 'pencil' if action == 'edit' else 'plus-circle' }} me-2"></i>{{ '编辑事件' if action == 'edit' else '新增事件' }}
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary">事件信息</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label for="event_name" class="form-label fw-bold">事件名称 *</label>
+                                <input type="text" class="form-control form-control-sm" id="event_name" name="event_name"
+                                       value="{{ event.event_name if event else '' }}" required
+                                       placeholder="如：2025年区级卫片监测、XXX专项督查等">
+                                <div class="invalid-feedback">请输入事件名称</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="event_type" class="form-label fw-bold">事件类型 *</label>
+                                <select class="form-select form-select-sm" id="event_type" name="event_type" required>
+                                    <option value="">请选择...</option>
+                                    {% for et in event_types %}
+                                    <option value="{{ et }}" {% if event and event.event_type == et %}selected{% endif %}>{{ et }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">请选择事件类型</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="issue_date" class="form-label fw-bold">下发/发现日期</label>
+                                <input type="date" class="form-control form-control-sm" id="issue_date" name="issue_date"
+                                       value="{{ event.issue_date.isoformat() if event and event.issue_date else '' }}">
+                            </div>
+                            <div class="col-12">
+                                <label for="description" class="form-label fw-bold">事件描述</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"
+                                          placeholder="请输入事件详细描述...">{{ event.description if event and event.description else '' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ url_for('event.list') }}" class="btn btn-secondary btn-sm">
+                                        <i class="bi bi-arrow-left me-1"></i>返回
+                                    </a>
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-check-circle me-1"></i>保存
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary">帮助说明</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small text-muted">
+                        <p class="mb-2"><strong>事件类型说明：</strong></p>
+                        <ul class="mb-0 ps-3">
+                            <li><span class="badge bg-primary">卫片下发</span> - 遥感卫片监测发现的问题</li>
+                            <li><span class="badge bg-danger">专项督查</span> - 上级专项督查检查发现</li>
+                            <li><span class="badge bg-success">日常巡查</span> - 日常巡查发现的问题</li>
+                            <li><span class="badge bg-warning">群众举报</span> - 群众举报的问题线索</li>
+                            <li><span class="badge bg-secondary">其他</span> - 其他来源的问题</li>
+                        </ul>
+                        <hr>
+                        <p class="mb-0">事件创建后，可以在图斑管理中关联事件，方便按事件筛选和统计。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 表单验证
+(function() {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

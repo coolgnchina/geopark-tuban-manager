@@ -5,7 +5,7 @@
 {% block header %}系统设置{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb" class="ms-3">
+<nav aria-label="breadcrumb" class="ms-2">
     <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item">
             <a href="{{ url_for('index') }}" class="text-decoration-none">
@@ -21,16 +21,16 @@
 
 {% block content %}
 <!-- 页面标题 -->
-<div class="page-header mb-4">
+<div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h2 class="h4 mb-2 fw-bold text-primary">
+            <h2 class="h5 mb-1 fw-bold text-primary">
                 <i class="bi bi-gear me-2"></i>字典管理
             </h2>
-            <p class="text-muted mb-0">管理系统中的各类字典数据，如下拉选项、状态值等</p>
+            <p class="text-muted mb-0 small">管理系统中的各类字典数据，如下拉选项、状态值等</p>
         </div>
         <div>
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
                 <i class="bi bi-plus-circle me-1"></i>添加字典项
             </button>
         </div>
@@ -38,18 +38,18 @@
 </div>
 
 <!-- 字典类型选择标签 -->
-<div class="dict-types-section mb-4">
+<div class="dict-types-section mb-3">
     <div class="card">
-        <div class="card-header">
+        <div class="card-header py-2">
             <h6 class="mb-0 fw-bold">
                 <i class="bi bi-tags me-2 text-primary"></i>字典类型
             </h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-2">
             <div class="btn-group flex-wrap" role="group">
                 {% for type in dict_types %}
                     <a href="{{ url_for('system.dictionaries', type=type) }}"
-                       class="btn {% if type == current_type %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2">
+                       class="btn btn-sm {% if type == current_type %}btn-primary{% else %}btn-outline-primary{% endif %}">
                         <i class="bi bi-tag me-1"></i>{{ type }}
                     </a>
                 {% endfor %}
@@ -59,45 +59,56 @@
 </div>
 
 <!-- 字典项列表 -->
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="60">序号</th>
-                                <th>编码</th>
-                                <th>显示值</th>
-                                <th width="100">排序</th>
-                                <th width="150">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in items %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td><code>{{ item.dict_code }}</code></td>
-                                    <td>{{ item.dict_value }}</td>
-                                    <td>{{ item.sort_order }}</td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-outline-warning"
-                                                onclick="editItem({{ item.id }}, '{{ item.dict_code }}', '{{ item.dict_value }}', {{ item.sort_order }})"
-                                                title="编辑">
-                                            <i class="bi bi-pencil"></i>
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-compact mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="50" class="text-center">序号</th>
+                        <th>编码</th>
+                        <th>显示值</th>
+                        <th width="80">排序</th>
+                        <th width="120" class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td class="text-center">{{ loop.index }}</td>
+                            <td><code>{{ item.dict_code }}</code></td>
+                            <td>{{ item.dict_value }}</td>
+                            <td>{{ item.sort_order }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-warning"
+                                            onclick="editItem({{ item.id }}, '{{ item.dict_code }}', '{{ item.dict_value }}', {{ item.sort_order }})"
+                                            title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{{ url_for('system.delete_dictionary', id=item.id) }}"
+                                          style="display: inline-block;" onsubmit="return confirm('确定要删除吗？')">
+                                        <button type="submit" class="btn btn-outline-danger"
+                                                title="删除">
+                                            <i class="bi bi-trash"></i>
                                         </button>
-                                                                <form method="POST" action="{{ url_for('system.delete_dictionary', id=item.id) }}"
-                                              style="display: inline-block;" onsubmit="return confirm('确定要删除吗？')">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                    title="删除">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% else %}
-                                <tr>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <div class="mt-2">暂无数据</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
                                     <td colspan="5" class="text-center text-muted">暂无数据</td>
                                 </tr>
                             {% endfor %}

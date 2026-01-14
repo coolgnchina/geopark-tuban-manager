@@ -61,8 +61,9 @@ def create_app(config_class=Config):
    - 字典增删改: `/system/dictionary/<action>`
 
 4. **map_bp** (`/map`)
-   - 地图视图: `/map/view`
-   - 图斑分布: `/map/distribution`
+   - 地图展示: `/map` - 图斑地图可视化页面
+   - 图斑数据API: `/map/api/tubans` - GeoJSON格式图斑坐标数据
+   - 统计数据API: `/map/api/stats` - 各状态图斑数量统计
 
 ### 认证与授权
 - 基于Session的简单认证机制
@@ -92,6 +93,7 @@ python-dateutil==2.8.2   # 日期处理
 ```
 Tuban (图斑主表)
 ├── 关联 RectifyRecord (一对多)
+├── 关联 TubanImage (一对多) - 现场照片和卫星影像
 └── 引用 Dictionary (多对一，通过dict_type)
 ```
 
@@ -145,6 +147,16 @@ Tuban (图斑主表)
    - attachments: 附件路径
    - remark: 备注
 
+### TubanImage模型（图片管理）
+用于存储图斑相关的现场照片和卫星影像：
+- `image_type`: 图片类型 (photo/satellite)
+- `filename`: 存储的文件名
+- `original_name`: 原始文件名
+- `description`: 图片说明
+- `file_size`: 文件大小
+- `uploaded_at`: 上传时间
+- `uploaded_by`: 上传人
+
 ### 软删除设计
 所有模型使用 `is_deleted` 字段实现软删除：
 - 0: 未删除
@@ -175,6 +187,29 @@ Tuban (图斑主表)
    - 关闭调试模式
    - 启用线程支持
    - 禁用自动重载
+
+### 地图集成 (天地图)
+- **Tianditu (天地图)**: 中国地理信息公共服务平台
+  - API Key: `d602cd2008ab46fc508c4eef043b19c3`
+  - 支持矢量底图(vec)和影像底图(img)切换
+  - 包含注记层(cva/cia)
+- **Leaflet.js**: 开源地图交互库
+- **MarkerCluster**: 图斑标记聚合功能
+- **GeoJSON API**: `/map/api/tubans` 返回图斑坐标数据
+- **颜色编码**: 未整改(红)、整改中(黄)、已整改(蓝)、已销号(绿)
+
+### 图片管理功能
+- **存储路径**: `uploads/images/`
+- **支持格式**: JPG/PNG/GIF/BMP/WEBP
+- **文件大小限制**: 5MB
+- **图片类型**:
+  - `photo`: 现场照片
+  - `satellite`: 卫星影像
+- **API端点**:
+  - `GET /tuban/<id>/images`: 获取图斑所有图片
+  - `POST /tuban/<id>/images`: 上传新图片
+  - `DELETE /tuban/images/<image_id>`: 删除图片
+  - `GET /tuban/images/<filename>`: 访问图片文件
 
 ## 常见问题 (FAQ)
 
@@ -207,6 +242,7 @@ A: 编辑 `app.py` 或 `app_prod.py`，修改 `app.run()` 的 `port` 参数
 ### 模型文件 (models/)
 - `__init__.py` - SQLAlchemy实例初始化
 - `tuban.py` - 图斑主模型
+- `tuban_image.py` - 图斑图片模型
 - `dictionary.py` - 字典模型
 - `rectify_record.py` - 整改记录模型
 
@@ -226,6 +262,7 @@ A: 编辑 `app.py` 或 `app_prod.py`，修改 `app.run()` 的 `port` 参数
 - `base.html` - 基础模板
 - `index.html` - 首页仪表盘
 - `login.html` - 登录页
+- `map.html` - 地图展示页（集成天地图）
 - `tuban_*.html` - 图斑相关页面
 - `stats.html` - 统计页面
 - `dictionaries.html` - 字典管理页
@@ -240,6 +277,12 @@ A: 编辑 `app.py` 或 `app_prod.py`，修改 `app.run()` 的 `port` 参数
 - `restart_en.bat` - 快速重启脚本
 
 ## 变更记录 (Changelog)
+
+### 2025-12-23
+- 添加 TubanImage 图片管理模型说明
+- 补充地图功能(天地图集成)详细文档
+- 新增图片管理 API 端点说明
+- 更新路由文件清单(map.py)
 
 ### 2025-12-22
 - 更新模块级文档结构

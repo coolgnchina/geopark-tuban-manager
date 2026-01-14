@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.event_name }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}事件详情{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('event.list') }}" class="text-decoration-none">
+                <i class="bi bi-calendar-event me-1"></i>事件管理
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-eye me-1"></i>{{ event.event_name }}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- 1. 标题栏 -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('event.list') }}" class="btn btn-link text-secondary p-0 me-3 text-decoration-none">
+                    <i class="bi bi-arrow-left fs-5"></i>
+                </a>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h4 class="mb-0 fw-bold text-dark">{{ event.event_name }}</h4>
+                        {% set type_colors = {'卫片下发': 'primary', '专项督查': 'danger', '日常巡查': 'success', '群众举报': 'warning', '其他': 'secondary'} %}
+                        {% set color = type_colors.get(event.event_type, 'secondary') %}
+                        <span class="badge bg-{{ color }}">{{ event.event_type or '未分类' }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-1 small text-muted">
+                        {% if event.issue_date %}
+                        <span><i class="bi bi-calendar me-1"></i>{{ event.issue_date.strftime('%Y-%m-%d') }}</span>
+                        {% endif %}
+                        <span class="border-start ps-2"><i class="bi bi-table me-1"></i>关联 {{ tubans|length }} 个图斑</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('event.edit', id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil me-1"></i>编辑
+                </a>
+                <form method="POST" action="{{ url_for('event.delete', id=event.id) }}" class="d-inline" onsubmit="return confirm('确定要删除该事件吗？');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash me-1"></i>删除
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 事件信息 -->
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-info-circle me-2"></i>事件信息</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th style="width: 120px;" class="table-light">事件名称</th>
+                                <td>{{ event.event_name }}</td>
+                                <th style="width: 120px;" class="table-light">事件类型</th>
+                                <td style="width: 200px;">
+                                    {% set type_colors = {'卫片下发': 'primary', '专项督查': 'danger', '日常巡查': 'success', '群众举报': 'warning', '其他': 'secondary'} %}
+                                    {% set color = type_colors.get(event.event_type, 'secondary') %}
+                                    <span class="badge bg-{{ color }}">{{ event.event_type or '未分类' }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">下发日期</th>
+                                <td>{{ event.issue_date.strftime('%Y-%m-%d') if event.issue_date else '-' }}</td>
+                                <th class="table-light">创建时间</th>
+                                <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% if event.description %}
+                            <tr>
+                                <th class="table-light">事件描述</th>
+                                <td colspan="3">{{ event.description }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关联图斑列表 -->
+    <div class="card">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold text-primary">
+                <i class="bi bi-table me-2"></i>关联图斑 ({{ tubans|length }})
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            {% if tubans %}
+            <div class="table-responsive">
+                <table class="table table-hover table-compact mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>图斑编号</th>
+                            <th>项目名称</th>
+                            <th>设施名称</th>
+                            <th>问题类型</th>
+                            <th>整改进展</th>
+                            <th>创建时间</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tuban in tubans %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="fw-bold text-primary text-decoration-none">
+                                    {{ tuban.tuban_code }}
+                                </a>
+                            </td>
+                            <td>{{ tuban.park_name }}</td>
+                            <td>{{ tuban.facility_name or '-' }}</td>
+                            <td>{{ tuban.problem_type or '-' }}</td>
+                            <td>
+                                <span class="badge bg-{{ get_status_color(tuban.rectify_status) }}">
+                                    {{ tuban.rectify_status }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ tuban.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="btn btn-outline-primary btn-sm" title="查看">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-table" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0">暂无关联图斑</p>
+                <a href="{{ url_for('tuban.list') }}" class="btn btn-outline-primary btn-sm mt-2">
+                    <i class="bi bi-plus-circle me-1"></i>添加关联
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
