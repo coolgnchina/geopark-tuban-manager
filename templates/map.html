@@ -26,20 +26,23 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <style>
-/* 主容器 - 去除 padding，全屏显示 */
+    /* 地图页面容器 - 覆盖全局限制 */
     .map-page-container {
-        height: calc(100vh - 64px);  /* 减去顶部导航栏高度 */
+        height: calc(100vh - 120px);
         overflow: hidden;
-        margin: 0;
-        width: 100%;
+        margin: 0 0 0 -1.5rem;  /* 抵消content-wrapper的padding */
+        width: calc(100% + 3rem);  /* 扩展宽度填补padding空间 */
+        max-width: none !important;  /* 覆盖全局max-width限制 */
     }
 
-    /* 覆盖全局content-wrapper限制 - 地图页面全宽 */
-    .map-page-container .content-wrapper {
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
+    /* 地图和列表区域 - 无间隙 */
+    .map-row {
+        height: 100%;
+        margin: 0;
+    }
+
+    .map-row > div {
+        padding: 0;
         height: 100%;
     }
 
@@ -49,18 +52,7 @@
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
-    }
-
-    /* 覆盖page-content-wrapper限制 - 地图页面全宽 */
-    #page-content-wrapper.map-fullscreen {
-        margin-left: 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-
-    /* 隐藏侧边栏 - 地图全屏模式 */
-    #sidebar-wrapper.map-hidden {
-        display: none !important;
+        height: 100%;
     }
 
     /* 顶部工具栏 - 紧凑 */
@@ -670,11 +662,6 @@ function createPopupContent(props) {
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 地图页面全屏模式：隐藏侧边栏，内容区域全宽
-    document.getElementById('sidebar-wrapper').classList.add('map-hidden');
-    document.getElementById('page-content-wrapper').classList.add('map-fullscreen');
-    document.getElementById('wrapper').style.display = 'none'; // 隐藏wrapper，直接显示content-wrapper
-
     initMap();
 
     document.getElementById('filterStatus').addEventListener('change', loadTubans);
