@@ -26,26 +26,32 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <style>
-    /* 地图页面容器 - 覆盖全局限制 */
-    .map-page-container {
-        height: calc(100vh - 120px);
-        overflow: hidden;
-        margin: -1rem 0 -1rem -1rem;
-        width: calc(100% + 1rem);
-        max-width: none !important;
+    /* 覆盖content-wrapper的限制 */
+    #page-content-wrapper {
+        max-width: 100% !important;
+        width: calc(100vw - 260px) !important;
+        margin-left: 260px !important;
     }
 
-    /* 顶部工具栏 */
+    /* 地图容器 */
+    .map-wrap {
+        height: calc(100vh - 64px - 48px);
+        margin: -1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 工具栏 */
     .map-toolbar {
-        background: var(--bs-white);
-        border-bottom: 1px solid var(--bs-border-color);
+        background: white;
         padding: 0.5rem 1rem;
+        border-bottom: 1px solid #dee2e6;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-shrink: 0;
     }
 
-    /* 左侧筛选区 */
     .toolbar-filters {
         display: flex;
         gap: 0.5rem;
@@ -53,50 +59,44 @@
         flex: 1;
     }
 
-    .toolbar-filters select {
+    .toolbar-filters select,
+    .toolbar-filters .btn {
         font-size: 0.8rem;
         padding: 0.2rem 0.5rem;
-        width: auto;
-        min-width: 90px;
-        max-width: 130px;
     }
 
-    /* 右侧统计区 */
     .toolbar-stats {
         display: flex;
         gap: 0.5rem;
         flex-shrink: 0;
     }
 
-    .stat-mini {
+    .stat-pill {
         padding: 0.2rem 0.6rem;
         border-radius: 4px;
         color: white;
         font-size: 0.75rem;
         text-align: center;
-        min-width: 50px;
     }
 
-    .stat-mini .num { font-weight: bold; font-size: 0.85rem; }
-    .stat-mini .label { opacity: 0.85; font-size: 0.65rem; }
+    .stat-pill .num { font-weight: bold; font-size: 0.85rem; }
+    .stat-pill .label { opacity: 0.85; font-size: 0.65rem; }
+    .stat-pill.total { background: #2E8B57; }
+    .stat-pill.pending { background: #dc3545; }
+    .stat-pill.progress { background: #FFA500; }
+    .stat-pill.closed { background: #17a2b8; }
 
-    .stat-mini.total { background: #2E8B57; }
-    .stat-mini.pending { background: #dc3545; }
-    .stat-mini.progress { background: #FFA500; }
-    .stat-mini.closed { background: #17a2b8; }
-
-    /* 主内容区 */
-    .map-body {
-        height: calc(100% - 42px);
+    /* 内容区 */
+    .map-content {
+        flex: 1;
         display: flex;
         overflow: hidden;
     }
 
-    /* 地图区域 */
-    .map-section {
+    /* 地图 */
+    .map-main {
         flex: 1;
         position: relative;
-        height: 100%;
     }
 
     #map {
@@ -104,7 +104,6 @@
         height: 100%;
     }
 
-    /* 图例 */
     .map-legend {
         position: absolute;
         bottom: 10px;
@@ -128,9 +127,9 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
+        display: inline-block;
     }
 
-    /* 底图切换 */
     .basemap-switch {
         position: absolute;
         top: 10px;
@@ -156,27 +155,26 @@
     }
 
     /* 图斑列表 */
-    .list-section {
-        width: 320px;
+    .map-sidebar {
+        width: 300px;
         min-width: 280px;
-        max-width: 400px;
+        max-width: 380px;
         background: white;
-        border-left: 1px solid var(--bs-border-color);
+        border-left: 1px solid #dee2e6;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
     }
 
-    .list-header {
+    .sidebar-header {
         padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--bs-border-color);
+        border-bottom: 1px solid #dee2e6;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-shrink: 0;
     }
 
-    .list-header h6 {
+    .sidebar-header h6 {
         margin: 0;
         font-size: 0.85rem;
         display: flex;
@@ -184,7 +182,7 @@
         gap: 0.5rem;
     }
 
-    .list-count {
+    .sidebar-count {
         background: #2E8B57;
         color: white;
         padding: 0.1rem 0.4rem;
@@ -192,54 +190,52 @@
         font-size: 0.7rem;
     }
 
-    /* 列表内容 */
-    .list-content {
+    .sidebar-list {
         flex: 1;
         overflow-y: auto;
     }
 
-    .list-item {
+    .sidebar-item {
         padding: 0.5rem 0.75rem;
-        border-bottom: 1px solid var(--bs-border-color);
+        border-bottom: 1px solid #dee2e6;
         cursor: pointer;
         transition: background 0.15s;
     }
 
-    .list-item:hover {
-        background: var(--bs-light-bg-subtle);
+    .sidebar-item:hover {
+        background: #f8f9fa;
     }
 
-    .list-item.active {
-        background: var(--bs-primary-bg-subtle);
-        border-left: 3px solid var(--bs-primary);
+    .sidebar-item.active {
+        background: #e7f1ff;
+        border-left: 3px solid #0d6efd;
     }
 
-    .item-code {
+    .item-title {
         font-weight: bold;
-        color: var(--bs-primary);
+        color: #0d6efd;
         font-size: 0.85rem;
     }
 
     .item-park {
         font-size: 0.75rem;
-        color: var(--bs-secondary);
+        color: #6c757d;
         margin: 0.2rem 0;
     }
 
-    .item-meta {
+    .item-tags {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.3rem;
         align-items: center;
     }
 
-    .status-tag {
+    .item-tag {
         font-size: 0.65rem;
         padding: 0.1rem 0.35rem;
         border-radius: 3px;
     }
 
-    /* 加载动画 */
-    .map-loading {
+    .loading-overlay {
         position: absolute;
         top: 50%;
         left: 50%;
@@ -251,14 +247,14 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        box-shadow: var(--shadow);
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="content-wrapper p-0" style="margin: -1.5rem;">
-    <!-- 顶部工具栏 -->
+<div class="map-wrap">
+    <!-- 工具栏 -->
     <div class="map-toolbar">
         <div class="toolbar-filters">
             <select id="filterStatus" class="form-select form-select-sm">
@@ -300,32 +296,32 @@
         </div>
 
         <div class="toolbar-stats">
-            <div class="stat-mini total">
+            <div class="stat-pill total">
                 <div class="num" id="statTotal">0</div>
                 <div class="label">总数</div>
             </div>
-            <div class="stat-mini pending">
+            <div class="stat-pill pending">
                 <div class="num" id="statPending">0</div>
                 <div class="label">未整改</div>
             </div>
-            <div class="stat-mini progress">
+            <div class="stat-pill progress">
                 <div class="num" id="statProgress">0</div>
                 <div class="label">整改中</div>
             </div>
-            <div class="stat-mini closed">
+            <div class="stat-pill closed">
                 <div class="num" id="statClosed">0</div>
                 <div class="label">已销号</div>
             </div>
         </div>
     </div>
 
-    <!-- 主体区域 -->
-    <div class="map-body">
+    <!-- 内容区 -->
+    <div class="map-content">
         <!-- 地图 -->
-        <div class="map-section">
+        <div class="map-main">
             <div id="map"></div>
 
-            <div class="map-loading" id="mapLoading">
+            <div class="loading-overlay" id="mapLoading">
                 <div class="spinner-border spinner-border-sm text-primary"></div>
                 <span class="small">加载中...</span>
             </div>
@@ -344,15 +340,15 @@
         </div>
 
         <!-- 图斑列表 -->
-        <div class="list-section">
-            <div class="list-header">
+        <div class="map-sidebar">
+            <div class="sidebar-header">
                 <h6>
                     <i class="bi bi-list text-primary"></i>
                     图斑列表
-                    <span class="list-count" id="listCount">0</span>
+                    <span class="sidebar-count" id="listCount">0</span>
                 </h6>
             </div>
-            <div class="list-content" id="tubanList">
+            <div class="sidebar-list" id="tubanList">
                 <div class="text-center py-4 text-muted small">
                     <i class="bi bi-geo-alt" style="font-size: 1.5rem;"></i>
                     <p class="mb-0 mt-1">选择条件后显示图斑</p>
@@ -374,14 +370,12 @@ const TIANDITU_KEY = 'd602cd2008ab46fc508c4eef043b19c3';
 
 let map;
 let markersLayer;
-let currentBasemap = 'vec';
 let tubanMarkers = [];
 
 function initMap() {
     map = L.map('map', {
         center: [24.78, 106.56],
-        zoom: 10,
-        zoomControl: true
+        zoom: 10
     });
 
     addTiandituLayers('vec');
@@ -417,8 +411,6 @@ function addTiandituLayers(type) {
         subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
         maxZoom: 18
     }).addTo(map);
-
-    currentBasemap = type;
 }
 
 function loadTubans() {
@@ -454,14 +446,8 @@ function loadTubans() {
                     fillOpacity: 0.8
                 });
 
-                marker.bindPopup(createPopupContent(props), {
-                    maxWidth: 280,
-                    className: 'tuban-popup'
-                });
-
-                marker.on('click', function() {
-                    highlightListItem(props.id);
-                });
+                marker.bindPopup(createPopupContent(props), { maxWidth: 280 });
+                marker.on('click', function() { highlightListItem(props.id); });
 
                 markersLayer.addLayer(marker);
                 tubanMarkers.push({ id: props.id, marker: marker, props: props });
@@ -477,8 +463,7 @@ function loadTubans() {
                 }
             }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('id');
+            const targetId = new URLSearchParams(window.location.search).get('id');
             if (targetId) {
                 highlightAndZoomToTuban(parseInt(targetId));
             }
@@ -499,64 +484,42 @@ function loadStats() {
             document.getElementById('statPending').textContent = data.pending;
             document.getElementById('statProgress').textContent = data.in_progress;
             document.getElementById('statClosed').textContent = data.closed;
-        })
-        .catch(error => console.error('加载统计失败:', error));
+        });
 }
 
 function updateTubanList(features) {
     const listContainer = document.getElementById('tubanList');
 
     if (features.length === 0) {
-        listContainer.innerHTML = `
-            <div class="text-center py-4 text-muted small">
-                <i class="bi bi-geo-alt" style="font-size: 1.5rem;"></i>
-                <p class="mb-0 mt-1">暂无符合条件的数据</p>
-            </div>
-        `;
+        listContainer.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-geo-alt" style="font-size: 1.5rem;"></i><p class="mb-0 mt-1">暂无符合条件的数据</p></div>';
         return;
     }
 
     let html = '';
     features.forEach(feature => {
         const props = feature.properties;
-        const statusClass = getStatusClass(props.rectify_status);
+        const statusColor = {'未整改': 'danger', '整改中': 'warning text-dark', '已整改': 'info', '已销号': 'success'}[props.rectify_status] || 'secondary';
 
-        html += `
-            <div class="list-item" data-id="${props.id}" onclick="highlightAndZoomToTuban(${props.id})">
-                <div class="item-code">${props.tuban_code}</div>
-                <div class="item-park">${props.park_name || '-'}</div>
-                <div class="item-meta">
-                    <span class="badge ${statusTagClass(props.rectify_status)} status-tag">${props.rectify_status}</span>
-                    ${props.problem_type ? `<span class="badge bg-secondary status-tag">${props.problem_type}</span>` : ''}
-                    ${props.area ? `<span class="text-muted small">${props.area}㎡</span>` : ''}
-                </div>
+        html += `<div class="sidebar-item" data-id="${props.id}" onclick="highlightAndZoomToTuban(${props.id})">
+            <div class="item-title">${props.tuban_code}</div>
+            <div class="item-park">${props.park_name || '-'}</div>
+            <div class="item-tags">
+                <span class="badge bg-${statusColor} item-tag">${props.rectify_status}</span>
+                ${props.problem_type ? `<span class="badge bg-secondary item-tag">${props.problem_type}</span>` : ''}
+                ${props.area ? `<span class="text-muted small">${props.area}㎡</span>` : ''}
             </div>
-        `;
+        </div>`;
     });
 
     listContainer.innerHTML = html;
-}
-
-function getStatusClass(status) {
-    const map = {
-        '未整改': 'bg-danger',
-        '整改中': 'bg-warning text-dark',
-        '已整改': 'bg-info',
-        '已销号': 'bg-success'
-    };
-    return map[status] || 'bg-secondary';
-}
-
-function statusTagClass(status) {
-    return getStatusClass(status);
 }
 
 function highlightAndZoomToTuban(id) {
     const item = tubanMarkers.find(m => m.id === id);
     if (!item) return;
 
-    document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
-    const listItem = document.querySelector(`.list-item[data-id="${id}"]`);
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    const listItem = document.querySelector(`.sidebar-item[data-id="${id}"]`);
     if (listItem) {
         listItem.classList.add('active');
         listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -567,40 +530,32 @@ function highlightAndZoomToTuban(id) {
 }
 
 function highlightListItem(id) {
-    document.querySelectorAll('.list-item').forEach(el => el.classList.remove('active'));
-    const listItem = document.querySelector(`.list-item[data-id="${id}"]`);
-    if (listItem) {
-        listItem.classList.add('active');
-    }
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    const listItem = document.querySelector(`.sidebar-item[data-id="${id}"]`);
+    if (listItem) listItem.classList.add('active');
 }
 
 function createPopupContent(props) {
-    let badgeClass = 'bg-secondary';
-    if (props.rectify_status === '未整改') badgeClass = 'bg-danger';
-    else if (props.rectify_status === '整改中') badgeClass = 'bg-warning text-dark';
-    else if (props.rectify_status === '已整改') badgeClass = 'bg-info';
-    else if (props.is_closed === '是') badgeClass = 'bg-success';
+    const statusColor = {'未整改': 'danger', '整改中': 'warning text-dark', '已整改': 'info', '已销号': 'success'}[props.rectify_status] || 'secondary';
 
-    return `
-        <div style="min-width: 180px;">
-            <h6 style="margin: 0 0 6px; padding-bottom: 6px; border-bottom: 1px solid #eee; color: #2E8B57; font-size: 0.85rem;">
-                <i class="bi bi-geo-alt-fill me-1"></i>${props.tuban_code}
-            </h6>
-            <div style="margin-bottom: 6px;">
-                <span class="badge ${badgeClass}">${props.rectify_status}</span>
-                ${props.is_closed === '是' ? '<span class="badge bg-success ms-1">已销号</span>' : ''}
-            </div>
-            <table style="width: 100%; font-size: 0.75rem;">
-                <tr><td class="text-muted">公园</td><td>${props.park_name || '-'}</td></tr>
-                <tr><td class="text-muted">功能区</td><td>${props.func_zone || '-'}</td></tr>
-                <tr><td class="text-muted">问题</td><td>${props.problem_type || '-'}</td></tr>
-                ${props.area ? `<tr><td class="text-muted">面积</td><td>${props.area} ㎡</td></tr>` : ''}
-            </table>
-            <a href="/tuban/detail/${props.id}" class="btn btn-sm btn-outline-primary w-100 mt-2" style="font-size: 0.7rem;">
-                <i class="bi bi-eye me-1"></i>查看详情
-            </a>
+    return `<div style="min-width: 180px;">
+        <h6 style="margin: 0 0 6px; padding-bottom: 6px; border-bottom: 1px solid #eee; color: #2E8B57; font-size: 0.85rem;">
+            <i class="bi bi-geo-alt-fill me-1"></i>${props.tuban_code}
+        </h6>
+        <div style="margin-bottom: 6px;">
+            <span class="badge bg-${statusColor}">${props.rectify_status}</span>
+            ${props.is_closed === '是' ? '<span class="badge bg-success ms-1">已销号</span>' : ''}
         </div>
-    `;
+        <table style="width: 100%; font-size: 0.75rem;">
+            <tr><td class="text-muted">公园</td><td>${props.park_name || '-'}</td></tr>
+            <tr><td class="text-muted">功能区</td><td>${props.func_zone || '-'}</td></tr>
+            <tr><td class="text-muted">问题</td><td>${props.problem_type || '-'}</td></tr>
+            ${props.area ? `<tr><td class="text-muted">面积</td><td>${props.area} ㎡</td></tr>` : ''}
+        </table>
+        <a href="/tuban/detail/${props.id}" class="btn btn-sm btn-outline-primary w-100 mt-2" style="font-size: 0.7rem;">
+            <i class="bi bi-eye me-1"></i>查看详情
+        </a>
+    </div>`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -611,12 +566,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('filterProblem').addEventListener('change', loadTubans);
     document.getElementById('filterEvent').addEventListener('change', loadTubans);
 
-    document.getElementById('btnRefresh').addEventListener('click', function() {
-        loadTubans();
-        loadStats();
-    });
+    document.getElementById('btnRefresh').addEventListener('click', function() { loadTubans(); loadStats(); });
 
-    // 底图切换
     document.querySelectorAll('.basemap-switch button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.basemap-switch button').forEach(b => b.classList.remove('active'));
@@ -625,23 +576,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 导出
     document.getElementById('btnExport').addEventListener('click', function() {
         const items = tubanMarkers.map(m => m.props);
-        if (items.length === 0) {
-            alert('当前没有数据可导出');
-            return;
-        }
-        const headers = ['图斑编号', '地质公园', '功能区', '问题类型', '整改进展'];
-        const csvContent = ['\ufeff' + headers.join(',')].concat(
-            items.map(item => [item.tuban_code, item.park_name, item.func_zone, item.problem_type, item.rectify_status].join(','))
-        ).join('\n');
+        if (items.length === 0) { alert('当前没有数据可导出'); return; }
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `图斑列表_${new Date().toISOString().slice(0,10)}.csv`;
-        link.click();
+        const csv = ['\ufeff图斑编号,地质公园,功能区,问题类型,整改进展']
+            .concat(items.map(i => `${i.tuban_code},${i.park_name},${i.func_zone},${i.problem_type},${i.rectify_status}`))
+            .join('\n');
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = `图斑列表_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
     });
 });
 </script>
