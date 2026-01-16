@@ -131,6 +131,11 @@ def _render_detail(tuban):
         tuban_id=tuban.id, image_type="photo", is_deleted=0
     ).all()
 
+    # 获取卫片影像
+    satellites = TubanImage.query.filter_by(
+        tuban_id=tuban.id, image_type="satellite", is_deleted=0
+    ).all()
+
     # 检查是否超期
     is_overdue = calculate_overdue_status(tuban.rectify_deadline, tuban.rectify_status)
     overdue_days = get_overdue_days(tuban.rectify_deadline) if is_overdue else 0
@@ -143,6 +148,7 @@ def _render_detail(tuban):
         tuban=tuban,
         rectify_records=rectify_records,
         photos=photos,
+        satellites=satellites,
         is_overdue=is_overdue,
         overdue_days=overdue_days,
         get_current_date=lambda: today,
@@ -681,11 +687,8 @@ def upload_image(id):
     """上传图片到指定图斑"""
     tuban = Tuban.query.get_or_404(id)
 
-    if "file" not in request.files:
-        return jsonify({"success": False, "message": "没有选择文件"})
-
-    file = request.files["file"]
-    if not file.filename:
+    file = request.files.get("file") or request.files.get("photo")
+    if not file or not file.filename:
         return jsonify({"success": False, "message": "没有选择文件"})
 
     safe_name = sanitize_filename(file.filename)
@@ -693,7 +696,8 @@ def upload_image(id):
         return jsonify({"success": False, "message": "文件名无效"})
 
     # 获取图片类型
-    image_type = request.form.get("image_type", "photo")
+    image_type = request.form.get("image_type") or request.args.get("type") or "photo"
+    image_type = image_type.lower()
     if image_type not in ["photo", "satellite"]:
         return jsonify({"success": False, "message": "无效的图片类型"})
 

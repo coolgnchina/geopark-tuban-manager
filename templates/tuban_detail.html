@@ -352,8 +352,8 @@
             </div>
         </div>
 
-        <!-- 底部：照片 + 整改记录 + 快捷操作（3列布局） -->
-        <div class="col-lg-4">
+        <!-- 底部：照片 + 卫片 + 整改记录 + 快捷操作（4列布局） -->
+        <div class="col-lg-3">
             <div class="card">
                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-image me-2"></i>现场照片</h6>
@@ -361,10 +361,15 @@
                 </div>
                 <div class="card-body p-2">
                     {% if photos %}
-                        <div class="row g-2">
+                        <!-- Viewer.js 图片容器 -->
+                        <div class="row g-2 viewer-photos" data-viewer="photos">
                             {% for photo in photos %}
-                            <div class="col-4">
-                                <img src="{{ url_for('tuban.images', filename=photo.filename) }}" class="img-thumbnail w-100" style="aspect-ratio: 1; object-fit: cover;" alt="现场照片">
+                            <div class="col-6">
+                                <img src="{{ url_for('tuban.serve_image', filename=photo.filename) }}"
+                                     class="img-thumbnail w-100 viewer-img"
+                                     style="aspect-ratio: 1; object-fit: cover; cursor: pointer;"
+                                     alt="现场照片"
+                                     data-original="{{ url_for('tuban.serve_image', filename=photo.filename) }}">
                             </div>
                             {% endfor %}
                         </div>
@@ -378,7 +383,38 @@
             </div>
         </div>
 
-        <div class="col-lg-5">
+        <!-- 卫片影像 -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-globe me-2"></i>卫片影像</h6>
+                    <button class="btn btn-link btn-sm p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#uploadSatelliteModal">上传</button>
+                </div>
+                <div class="card-body p-2">
+                    {% if satellites %}
+                        <!-- Viewer.js 图片容器 -->
+                        <div class="row g-2 viewer-satellites" data-viewer="satellites">
+                            {% for satellite in satellites %}
+                            <div class="col-6">
+                                <img src="{{ url_for('tuban.serve_image', filename=satellite.filename) }}"
+                                     class="img-thumbnail w-100 viewer-img"
+                                     style="aspect-ratio: 1; object-fit: cover; cursor: pointer;"
+                                     alt="卫片影像"
+                                     data-original="{{ url_for('tuban.serve_image', filename=satellite.filename) }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3 text-muted small">
+                            <i class="bi bi-globe" style="font-size: 1.5rem;"></i>
+                            <p class="mb-0 mt-1">暂无卫片</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-clock-history me-2"></i>整改记录</h6>
@@ -406,7 +442,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3">
+        <div class="col-lg-2">
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-lightning me-2"></i>快捷操作</h6>
@@ -418,6 +454,9 @@
                         </button>
                         <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
                             <i class="bi bi-camera me-1"></i>上传现场照片
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#uploadSatelliteModal">
+                            <i class="bi bi-globe me-1"></i>上传卫片影像
                         </button>
                         <a href="/map?id={{ tuban.id }}" target="_blank" class="btn btn-outline-info btn-sm">
                             <i class="bi bi-geo-alt me-1"></i>查看地图位置
@@ -449,10 +488,11 @@
             </div>
             <form method="POST" action="{{ url_for('tuban.upload_image', id=tuban.id, type='photo') }}" enctype="multipart/form-data">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="image_type" value="photo">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="photo" class="form-label">选择照片</label>
-                        <input type="file" class="form-control" id="photo" name="photo" accept="image/*" required>
+                        <input type="file" class="form-control" id="photo" name="file" accept="image/*" required>
                     </div>
                     <div class="mb-3">
                         <label for="photo_desc" class="form-label">照片描述</label>
@@ -462,6 +502,36 @@
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
                     <button type="submit" class="btn btn-primary btn-sm">上传</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 上传卫片影像模态框 -->
+<div class="modal fade" id="uploadSatelliteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white py-2">
+                <h6 class="modal-title"><i class="bi bi-globe me-2"></i>上传卫片影像</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('tuban.upload_image', id=tuban.id, type='satellite') }}" enctype="multipart/form-data">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="image_type" value="satellite">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="satellite" class="form-label">选择卫片</label>
+                        <input type="file" class="form-control" id="satellite" name="file" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="satellite_desc" class="form-label">卫片描述</label>
+                        <input type="text" class="form-control" id="satellite_desc" name="description" placeholder="可选">
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-info text-white btn-sm">上传</button>
                 </div>
             </form>
         </div>
@@ -504,4 +574,64 @@
         </div>
     </div>
 </div>
+
+<!-- Viewer.js 图片查看器初始化 -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化现场照片 Viewer
+    const photosContainer = document.querySelector('.viewer-photos');
+    if (photosContainer && photosContainer.querySelector('.viewer-img')) {
+        const photosViewer = new Viewer(photosContainer, {
+            inline: false,
+            button: true,
+            navbar: true,
+            title: true,
+            toolbar: true,
+            tooltip: true,
+            movable: true,
+            zoomable: true,
+            rotatable: true,
+            scalable: true,
+            fullscreen: true,
+            keyboard: true,
+            backdrop: 'static',
+            loop: true,
+            loading: true,
+            filter: null,
+            toggleOnDblclick: true,
+            show: function() {
+                // 动画显示
+                this.viewer.show();
+            },
+            hide: function() {
+                this.viewer.hide();
+            }
+        });
+    }
+
+    // 初始化卫片影像 Viewer
+    const satellitesContainer = document.querySelector('.viewer-satellites');
+    if (satellitesContainer && satellitesContainer.querySelector('.viewer-img')) {
+        const satellitesViewer = new Viewer(satellitesContainer, {
+            inline: false,
+            button: true,
+            navbar: true,
+            title: true,
+            toolbar: true,
+            tooltip: true,
+            movable: true,
+            zoomable: true,
+            rotatable: true,
+            scalable: true,
+            fullscreen: true,
+            keyboard: true,
+            backdrop: 'static',
+            loop: true,
+            loading: true,
+            filter: null,
+            toggleOnDblclick: true
+        });
+    }
+});
+</script>
 {% endblock %}

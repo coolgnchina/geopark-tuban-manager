@@ -72,11 +72,38 @@ def allowed_file(filename, allowed_extensions):
 
 
 def sanitize_filename(filename: str) -> str | None:
-    """生成安全文件名"""
+    """生成安全文件名，支持中文"""
     if not filename:
         return None
-    safe_name = secure_filename(filename)
-    return safe_name or None
+
+    # 导入在函数内部避免循环导入
+    import re
+    from werkzeug.utils import secure_filename
+
+    # 分离文件名和扩展名
+    name_part = filename.rsplit(".", 1)[0]
+    ext_part = filename.rsplit(".", 1)[1] if "." in filename else ""
+
+    # 处理扩展名（保持原始扩展名）
+    ext = ext_part.lower() if ext_part else ""
+
+    # 处理文件名主体：先尝试 werkzeug 的 secure_filename
+    # 如果结果为空（说明是纯中文文件名），则自定义处理
+    safe_name_part = secure_filename(name_part)
+
+    if not safe_name_part:
+        # 自定义处理：保留中文，移除危险字符
+        # 只保留中文、字母、数字、空格、点、连字符、下划线
+        safe_name_part = re.sub(r"[^\w\u4e00-\u9fff\s\-_.]", "", name_part)
+        safe_name_part = safe_name_part.strip()
+
+    if not safe_name_part:
+        return None
+
+    # 重新组合文件名
+    if ext:
+        return f"{safe_name_part}.{ext}"
+    return safe_name_part
 
 
 def safe_join_upload(base_dir: str, relative_path: str) -> Path | None:

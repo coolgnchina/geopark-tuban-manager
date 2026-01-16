@@ -11,6 +11,7 @@ from flask import (
 from datetime import datetime
 from models import db
 from models.tuban import Tuban
+from models.tuban_image import TubanImage
 from models.rectify_record import RectifyRecord
 from models.dictionary import Dictionary
 from utils.helpers import (
@@ -112,16 +113,32 @@ def detail(id):
         .all()
     )
 
+    # 获取现场照片
+    photos = TubanImage.query.filter_by(
+        tuban_id=id, image_type="photo", is_deleted=0
+    ).all()
+
+    # 获取卫片影像
+    satellites = TubanImage.query.filter_by(
+        tuban_id=id, image_type="satellite", is_deleted=0
+    ).all()
+
     # 检查是否超期
     is_overdue = calculate_overdue_status(tuban.rectify_deadline, tuban.rectify_status)
     overdue_days = get_overdue_days(tuban.rectify_deadline) if is_overdue else 0
+
+    # 获取当前日期（用于模板比较）
+    today = datetime.now().date()
 
     return render_template(
         "tuban_detail.html",
         tuban=tuban,
         rectify_records=rectify_records,
+        photos=photos,
+        satellites=satellites,
         is_overdue=is_overdue,
         overdue_days=overdue_days,
+        get_current_date=lambda: today,
     )
 
 
