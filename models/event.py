@@ -10,9 +10,9 @@ class Event(db.Model):
     event_type = db.Column(
         db.String(50), comment="事件类型：卫片下发/专项督查/日常巡查/群众举报/其他"
     )
-    issue_date = db.Column(db.Date, comment="下发/发现日期")
+    issue_date = db.Column(db.Date, comment="下发/发现日期", index=True)
     description = db.Column(db.Text, comment="事件描述")
-    is_active = db.Column(db.Integer, default=1, comment="是否启用")
+    is_active = db.Column(db.Integer, default=1, comment="是否启用", index=True)
 
     # 系统字段
     created_at = db.Column(db.DateTime, default=datetime.now)

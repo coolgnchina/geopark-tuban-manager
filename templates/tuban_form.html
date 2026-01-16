@@ -26,6 +26,7 @@
 
 {% block content %}
 <form method="POST" class="needs-validation" novalidate enctype="multipart/form-data" id="tubanForm">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
     <div class="row">
         <!-- 基础信息 -->
         <div class="col-12 mb-3">
@@ -548,11 +549,13 @@
                 formData.append('file', files[i]);
 
                 try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     const response = await fetch('{{ url_for("tuban.upload_attachment") }}', {
                         method: 'POST',
                         body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-Token': csrfToken
                         }
                     });
 

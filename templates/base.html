@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}{{ config.APP_NAME }}{% endblock %}</title>
+
 
     <!-- Bootstrap CSS -->
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
@@ -48,6 +50,11 @@
                     class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'event.list' or request.endpoint == 'event.detail' or request.endpoint == 'event.add' or request.endpoint == 'event.edit' %}active{% endif %}">
                     <i class="bi bi-calendar-event"></i>
                     <span class="nav-text ms-2">事件管理</span>
+                </a>
+                <a href="{{ url_for('project.list') }}"
+                    class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'project.list' or request.endpoint == 'project.detail' or request.endpoint == 'project.add' or request.endpoint == 'project.edit' %}active{% endif %}">
+                    <i class="bi bi-building"></i>
+                    <span class="nav-text ms-2">项目管理</span>
                 </a>
                 <a href="{{ url_for('stats.index') }}"
                     class="list-group-item list-group-item-action bg-transparent second-text {% if request.endpoint == 'stats.index' %}active{% endif %}">

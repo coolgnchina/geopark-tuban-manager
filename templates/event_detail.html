@@ -53,6 +53,7 @@
                     <i class="bi bi-pencil me-1"></i>编辑
                 </a>
                 <form method="POST" action="{{ url_for('event.delete', id=event.id) }}" class="d-inline" onsubmit="return confirm('确定要删除该事件吗？');">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-danger btn-sm">
                         <i class="bi bi-trash me-1"></i>删除
                     </button>

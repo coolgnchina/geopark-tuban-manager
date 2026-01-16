@@ -19,6 +19,18 @@
 </nav>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* 覆盖content-wrapper的限制 - 事件管理页面全宽 */
+    #page-content-wrapper {
+        max-width: 100% !important;
+        width: calc(100vw - 260px) !important;
+        margin-left: 260px !important;
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-wrapper">
     <!-- 页面标题 -->
@@ -136,6 +148,7 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form method="POST" action="{{ url_for('event.delete', id=event.id) }}" class="d-inline" onsubmit="return confirm('确定要删除该事件吗？');">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-outline-danger btn-sm" title="删除">
                                             <i class="bi bi-trash"></i>
                                         </button>

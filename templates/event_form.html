@@ -24,6 +24,18 @@
 </nav>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* 覆盖content-wrapper的限制 - 事件表单页面全宽 */
+    #page-content-wrapper {
+        max-width: 100% !important;
+        width: calc(100vw - 260px) !important;
+        margin-left: 260px !important;
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-wrapper">
     <div class="page-header">
@@ -35,13 +47,14 @@
     </div>
 
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-lg-9">
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0 fw-bold text-primary">事件信息</h6>
                 </div>
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label for="event_name" class="form-label fw-bold">事件名称 *</label>
@@ -86,7 +99,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="card">
                 <div class="card-header py-2">
                     <h6 class="mb-0 fw-bold text-primary">帮助说明</h6>

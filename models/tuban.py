@@ -1,5 +1,6 @@
 from datetime import datetime
 from . import db
+from models.project import project_tubans
 
 
 class Tuban(db.Model):
@@ -11,8 +12,11 @@ class Tuban(db.Model):
     tuban_code = db.Column(
         db.String(50), nullable=False, unique=True, comment="图斑编号"
     )
-    park_name = db.Column(db.String(100), nullable=False, comment="所属地质公园名称")
-    func_zone = db.Column(db.String(50), comment="所在功能区")
+    park_name = db.Column(
+        db.String(100), nullable=False, comment="所属地质公园名称", index=True
+    )
+    func_zone = db.Column(db.String(50), comment="所在功能区", index=True)
+
     facility_name = db.Column(db.String(200), comment="活动/设施名称")
     longitude = db.Column(db.Numeric(10, 6), comment="经度")
     latitude = db.Column(db.Numeric(10, 6), comment="纬度")
@@ -26,7 +30,8 @@ class Tuban(db.Model):
     approval_no = db.Column(db.String(100), comment="审批文号")
 
     # 发现与核查信息
-    discover_time = db.Column(db.Date, comment="发现时间")
+    discover_time = db.Column(db.Date, comment="发现时间", index=True)
+
     discover_method = db.Column(db.String(50), comment="发现方式")
     check_time = db.Column(db.Date, comment="现场核查时间")
     check_person = db.Column(db.String(50), comment="核查人员")
@@ -43,11 +48,12 @@ class Tuban(db.Model):
 
     # 整改信息
     rectify_measure = db.Column(db.Text, comment="整改措施")
-    rectify_deadline = db.Column(db.Date, comment="整改时限")
-    rectify_status = db.Column(db.String(20), comment="整改进展")
+    rectify_deadline = db.Column(db.Date, comment="整改时限", index=True)
+    rectify_status = db.Column(db.String(20), comment="整改进展", index=True)
+
     rectify_verify_time = db.Column(db.Date, comment="整改验收时间")
     verify_person = db.Column(db.String(50), comment="验收人员")
-    is_closed = db.Column(db.String(10), comment="是否销号")
+    is_closed = db.Column(db.String(10), comment="是否销号", index=True)
 
     # 处罚信息
     is_punished = db.Column(db.String(10), comment="是否处罚")
@@ -63,9 +69,9 @@ class Tuban(db.Model):
     remark = db.Column(db.Text, comment="备注")
 
     # 系统字段
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.now, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    is_deleted = db.Column(db.Integer, default=0)
+    is_deleted = db.Column(db.Integer, default=0, index=True)
 
     # 关联关系
     rectify_records = db.relationship(
@@ -73,6 +79,9 @@ class Tuban(db.Model):
     )
     events = db.relationship(
         "Event", secondary="tuban_events", back_populates="tubans", lazy="dynamic"
+    )
+    projects = db.relationship(
+        "Project", secondary=project_tubans, back_populates="tubans", lazy="dynamic"
     )
 
     def __repr__(self):

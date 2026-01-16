@@ -9,8 +9,11 @@ from flask import (
     flash,
     session,
     redirect,
+    abort,
+    send_file,
 )
 from datetime import datetime
+from typing import cast
 from config import Config
 from models import db
 from models.tuban import Tuban
@@ -18,13 +21,21 @@ from models.dictionary import Dictionary
 from models.rectify_record import RectifyRecord
 from models.event import Event
 from models.tuban_event import tuban_events
+from models.user import User
 from routes.tuban import tuban_bp
 from routes.stats import stats_bp
 from routes.system import system_bp
 from routes.map import map_bp
 from routes.events import event_bp
-from utils.helpers import format_date, format_datetime, get_status_color
+from routes.project import project_bp
+from utils.helpers import (
+    format_date,
+    format_datetime,
+    get_status_color,
+    safe_join_upload,
+)
 import os
+import secrets
 from test_icons import test_bp
 
 
@@ -41,18 +52,41 @@ def create_app(config_class=Config):
     app.register_blueprint(system_bp, url_prefix="/system")
     app.register_blueprint(map_bp, url_prefix="/map")
     app.register_blueprint(event_bp, url_prefix="/")
+    app.register_blueprint(project_bp, url_prefix="/")
     app.register_blueprint(test_bp, url_prefix="/test")
 
     # 添加模板全局函数
-    app.jinja_env.globals.update(format_date=format_date)
-    app.jinja_env.globals.update(format_datetime=format_datetime)
-    app.jinja_env.globals.update(get_status_color=get_status_color)
+    template_globals = cast(dict[str, object], app.jinja_env.globals)
+    template_globals["format_date"] = format_date
+    template_globals["format_datetime"] = format_datetime
+    template_globals["get_status_color"] = get_status_color
+
+    def get_csrf_token():
+        token = session.get("_csrf_token")
+        if not token:
+            token = secrets.token_urlsafe(32)
+            session["_csrf_token"] = token
+        return token
+
+    template_globals["csrf_token"] = get_csrf_token
 
     # 添加获取当前日期的函数供模板使用
     def get_current_date():
         return datetime.now().date()
 
-    app.jinja_env.globals.update(get_current_date=get_current_date)
+    # 添加JSON解析过滤器
+    @app.template_filter("json_parse")
+    def json_parse_filter(s):
+        import json
+
+        try:
+            if s and s.startswith("["):
+                return json.loads(s)
+            return []
+        except:
+            return []
+
+    template_globals["get_current_date"] = get_current_date
 
     # 创建上传目录
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -122,13 +156,18 @@ def create_app(config_class=Config):
         if request.method == "POST":
             username = request.form.get("username")
             password = request.form.get("password")
-            # 简化登录逻辑，实际项目中应该使用用户表验证
-            if username == "admin" and password == "admin123":
-                session["username"] = username
-                session["role"] = "admin"
+            if not username or not password:
+                flash("请输入用户名和密码", "error")
+                return render_template("login.html")
+
+            user = User.query.filter_by(username=username, is_active=1).first()
+            if user and user.check_password(password):
+                session["user_id"] = user.id
+                session["username"] = user.username
+                session["role"] = user.role
                 return redirect(url_for("index"))
-            else:
-                flash("用户名或密码错误", "error")
+
+            flash("用户名或密码错误", "error")
         return render_template("login.html")
 
     @app.route("/logout")
@@ -136,6 +175,13 @@ def create_app(config_class=Config):
         """退出登录"""
         session.clear()
         return redirect(url_for("login"))
+
+    @app.route("/uploads/<path:filename>")
+    def serve_upload(filename):
+        safe_path = safe_join_upload(app.config["UPLOAD_FOLDER"], filename)
+        if not safe_path or not safe_path.exists():
+            abort(404)
+        return send_file(safe_path, as_attachment=True, download_name=safe_path.name)
 
     @app.before_request
     def before_request():
@@ -149,6 +195,23 @@ def create_app(config_class=Config):
         ]
         if request.endpoint not in allowed_endpoints and "username" not in session:
             return redirect(url_for("login"))
+
+        admin_only_blueprints = {"system"}
+        if (
+            request.blueprint in admin_only_blueprints
+            and session.get("role") != "admin"
+        ):
+            abort(403)
+
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            if request.endpoint is None:
+                return None
+            csrf_token = session.get("_csrf_token")
+            submitted_token = request.form.get("_csrf_token") or request.headers.get(
+                "X-CSRF-Token"
+            )
+            if not csrf_token or not submitted_token or csrf_token != submitted_token:
+                abort(400)
 
     return app
 

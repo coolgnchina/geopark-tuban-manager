@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}项目管理 - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}项目管理{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-building me-1"></i>项目管理
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="h5 mb-1 fw-bold text-primary">
+                    <i class="bi bi-building me-2"></i>项目管理
+                </h2>
+                <p class="text-muted mb-0 small">
+                    共找到 <strong class="text-primary">{{ projects|length }}</strong> 个项目
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('project.add') }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>新增项目
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-filters">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-funnel me-2 text-primary"></i>筛选条件
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="GET" id="searchForm">
+                    <div class="form-row g-2">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-bold small">关键词搜索</label>
+                            <input type="text" class="form-control form-control-sm" name="search" value="{{ search_keyword }}" placeholder="项目名称或法人机构...">
+                        </div>
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label fw-bold small">审批状态</label>
+                            <select class="form-select form-select-sm" name="approval_status">
+                                <option value="">全部状态</option>
+                                {% for status in approval_statuses %}
+                                <option value="{{ status }}" {% if approval_status == status %}selected{% endif %}>{{ status }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label fw-bold small">项目状态</label>
+                            <select class="form-select form-select-sm" name="project_status">
+                                <option value="">全部状态</option>
+                                {% for status in project_statuses %}
+                                <option value="{{ status }}" {% if project_status == status %}selected{% endif %}>{{ status }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+                                <a href="{{ url_for('project.list') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-section">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-list-ul me-2 text-primary"></i>项目列表</h6>
+            </div>
+            <div class="card-body p-0">
+                {% if projects %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-compact mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">ID</th>
+                                <th>项目名称</th>
+                                <th>法人机构</th>
+                                <th>项目类型</th>
+                                <th>审批状态</th>
+                                <th>项目状态</th>
+                                <th>关联图斑数</th>
+                                <th style="width: 150px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in projects %}
+                            <tr>
+                                <td>{{ project.id }}</td>
+                                <td><a href="{{ url_for('project.detail', id=project.id) }}" class="fw-bold text-primary text-decoration-none">{{ project.project_name }}</a></td>
+                                <td>{{ project.legal_entity or '-' }}</td>
+                                <td><span class="badge bg-secondary">{{ project.project_type or '未分类' }}</span></td>
+                                <td>
+                                    {% if project.approval_status == '已审批' %}
+                                    <span class="badge bg-success">{{ project.approval_status }}</span>
+                                    {% elif '审批中' in project.approval_status %}
+                                    <span class="badge bg-warning">{{ project.approval_status }}</span>
+                                    {% elif project.approval_status == '未审批' %}
+                                    <span class="badge bg-danger">{{ project.approval_status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ project.approval_status or '-' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if project.project_status == '已完工' %}
+                                    <span class="badge bg-success">{{ project.project_status }}</span>
+                                    {% elif project.project_status == '在建' %}
+                                    <span class="badge bg-warning">{{ project.project_status }}</span>
+                                    {% elif project.project_status == '筹备' %}
+                                    <span class="badge bg-info">{{ project.project_status }}</span>
+                                    {% elif project.project_status == '停工' %}
+                                    <span class="badge bg-danger">{{ project.project_status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ project.project_status or '-' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-info">{{ project.tubans|length }}</span></td>
+                                <td>
+                                    <a href="{{ url_for('project.detail', id=project.id) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-eye"></i></a>
+                                    <a href="{{ url_for('project.edit', id=project.id) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></a>
+                                    <form method="POST" action="{{ url_for('project.delete', id=project.id) }}" class="d-inline" onsubmit="return confirm('确定要删除该项目吗？');">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
+
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-building" style="font-size: 3rem;"></i>
+                    <p class="mt-2 mb-0">暂无项目数据</p>
+                    <a href="{{ url_for('project.add') }}" class="btn btn-primary btn-sm mt-2"><i class="bi bi-plus-circle me-1"></i>新增项目</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

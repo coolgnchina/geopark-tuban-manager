@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}关联图斑 - {{ project.project_name }}{% endblock %}
+
+{% block header %}关联图斑{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('project.list') }}">项目管理</a></li>
+        <li class="breadcrumb-item active">{{ project.project_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<style>
+/* 覆盖全局限制 - 项目关联页面全宽 */
+#page-content-wrapper {
+    max-width: 100% !important;
+    width: calc(100vw - 260px) !important;
+    margin-left: 260px !important;
+}
+</style>
+<div class="content-wrapper">
+    <!-- 项目信息 -->
+    <div class="page-header mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="h5 mb-1 text-primary">{{ project.project_name }}</h4>
+                <small class="text-muted">
+                    {% if project.legal_entity %}{{ project.legal_entity }}{% endif %}
+                    {% if project.location %} | {{ project.location }}{% endif %}
+                </small>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end">
+                    <small class="text-muted">已关联</small>
+                    <span class="badge bg-success fs-6 ms-1">{{ linked_tuban_ids|length }} / {{ all_tubans|length }}</span>
+                </div>
+                <a href="{{ url_for('project.detail', id=project.id) }}" class="btn btn-secondary btn-sm">返回项目</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- 左侧：图斑选择列表 -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list me-2"></i>可用图斑列表
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAll()">
+                            <i class="bi bi-check-all me-1"></i>全选
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAll()">
+                            <i class="bi bi-x-square me-1"></i>取消
+                        </button>
+                    </div>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <div class="card-body p-0" style="max-height: calc(100vh - 320px); overflow-y: auto;">
+                        {% if all_tubans %}
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input class="form-check-input" type="checkbox" onclick="toggleAll(this)">
+                                    </th>
+                                    <th>图斑编号</th>
+                                    <th>设施名称</th>
+                                    <th>所在公园</th>
+                                    <th>问题类型</th>
+                                    <th>整改进展</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tuban in all_tubans %}
+                                <tr>
+                                    <td>
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="tuban_ids" 
+                                               value="{{ tuban.id }}"
+                                               id="tuban_{{ tuban.id }}"
+                                               {% if tuban.id in linked_tuban_ids %}checked{% endif %}>
+                                    </td>
+                                    <td>
+                                        <label class="form-check-label fw-bold text-primary" for="tuban_{{ tuban.id }}">
+                                            {{ tuban.tuban_code }}
+                                        </label>
+                                    </td>
+                                    <td>{{ tuban.facility_name or '-' }}</td>
+                                    <td>{{ tuban.park_name or '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ tuban.problem_type or '-' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if tuban.rectify_status == '已整改' %}
+                                        <span class="badge bg-success">{{ tuban.rectify_status }}</span>
+                                        {% elif tuban.rectify_status == '整改中' %}
+                                        <span class="badge bg-warning">{{ tuban.rectify_status }}</span>
+                                        {% elif tuban.rectify_status == '未整改' %}
+                                        <span class="badge bg-danger">{{ tuban.rectify_status }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ tuban.rectify_status or '未整改' }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-2 mb-0">暂无图斑数据</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if all_tubans %}
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">已选择 <span id="selectedCount" class="fw-bold">{{ linked_tuban_ids|length }}</span> 个图斑</small>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('project.detail', id=project.id) }}" class="btn btn-secondary">取消</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>保存关联
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- 右侧：项目信息和统计 -->
+        <div class="col-lg-4">
+            <!-- 项目信息卡片 -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-building me-2"></i>{{ project.project_name }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <div class="fw-bold text-primary fs-4">{{ linked_tuban_ids|length }}</div>
+                                <small class="text-muted">已关联</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded text-center">
+                                <div class="fw-bold text-secondary fs-4">{{ all_tubans|length }}</div>
+                                <small class="text-muted">可用</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="small">
+                        {% if project.legal_entity %}
+                        <div class="mb-2">
+                            <i class="bi bi-building me-2 text-muted"></i>{{ project.legal_entity }}
+                        </div>
+                        {% endif %}
+                        {% if project.contact_person %}
+                        <div class="mb-2">
+                            <i class="bi bi-person me-2 text-muted"></i>{{ project.contact_person }}
+                        </div>
+                        {% endif %}
+                        {% if project.contact_phone %}
+                        <div class="mb-2">
+                            <i class="bi bi-telephone me-2 text-muted"></i>{{ project.contact_phone }}
+                        </div>
+                        {% endif %}
+                        {% if project.location %}
+                        <div class="mb-2">
+                            <i class="bi bi-geo-alt me-2 text-muted"></i>{{ project.location }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>整改统计
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% set status_counts = {'已整改': 0, '整改中': 0, '未整改': 0} %}
+                    {% for tuban in all_tubans %}
+                        {% if tuban.rectify_status in status_counts %}
+                            {% set _ = status_counts.update({tuban.rectify_status: status_counts[tuban.rectify_status] + 1}) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>已整改</small>
+                            <small class="fw-bold text-success">{{ status_counts['已整改'] }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: {{ (status_counts['已整改'] / all_tubans|length * 100) if all_tubans else 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>整改中</small>
+                            <small class="fw-bold text-warning">{{ status_counts['整改中'] }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: {{ (status_counts['整改中'] / all_tubans|length * 100) if all_tubans else 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>未整改</small>
+                            <small class="fw-bold text-danger">{{ status_counts['未整改'] }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" style="width: {{ (status_counts['未整改'] / all_tubans|length * 100) if all_tubans else 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectAll() {
+    document.querySelectorAll('input[name="tuban_ids"]').forEach(cb => cb.checked = true);
+    updateCount();
+}
+function deselectAll() {
+    document.querySelectorAll('input[name="tuban_ids"]').forEach(cb => cb.checked = false);
+    updateCount();
+}
+function toggleAll(source) {
+    document.querySelectorAll('input[name="tuban_ids"]').forEach(cb => cb.checked = source.checked);
+    updateCount();
+}
+function updateCount() {
+    const count = document.querySelectorAll('input[name="tuban_ids"]:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+}
+// 监听checkbox变化
+document.querySelectorAll('input[name="tuban_ids"]').forEach(cb => {
+    cb.addEventListener('change', updateCount);
+});
+</script>
+{% endblock %}

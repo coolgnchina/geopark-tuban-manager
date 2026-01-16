@@ -284,7 +284,7 @@ body.toggled #page-content-wrapper {
 
     #page-content-wrapper {
         margin-left: var(--sidebar-width);
-        max-width: calc(100vw - var(--sidebar-width));
+        max-width: 100%;
     }
 
     body.toggled #sidebar-wrapper {
@@ -294,7 +294,7 @@ body.toggled #page-content-wrapper {
 
     body.toggled #page-content-wrapper {
         margin-left: var(--sidebar-collapsed-width);
-        max-width: calc(100vw - var(--sidebar-collapsed-width));
+        max-width: 100%;
     }
 
     body.toggled #sidebar-wrapper .nav-text,
@@ -481,7 +481,7 @@ body.toggled #page-content-wrapper {
 
     #page-content-wrapper {
         margin-left: var(--sidebar-width);
-        max-width: calc(100vw - var(--sidebar-width));
+        max-width: 100%;
     }
 
     body.toggled #sidebar-wrapper {
@@ -491,7 +491,7 @@ body.toggled #page-content-wrapper {
 
     body.toggled #page-content-wrapper {
         margin-left: var(--sidebar-collapsed-width);
-        max-width: calc(100vw - var(--sidebar-collapsed-width));
+        max-width: 100%;
     }
 
     body.toggled #sidebar-wrapper .nav-text,
@@ -1403,7 +1403,7 @@ textarea.form-control {
     }
 
     .main-content-container > .container-fluid {
-        max-width: 1400px;
+        max-width: none;
         margin: 0 auto;
         padding-left: 0.75rem;
         padding-right: 0.75rem;
@@ -1412,13 +1412,13 @@ textarea.form-control {
 
 @media (min-width: 1600px) {
     .main-content-container > .container-fluid {
-        max-width: 1500px;
+        max-width: none;
     }
 }
 
-/* 内容区域最大宽度限制 */
+/* 内容区域最大宽度限制 - 移除限制，使用全宽 */
 .content-wrapper {
-    max-width: 1600px;
+    max-width: 100%;
     margin: 0 auto;
 }
 

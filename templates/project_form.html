@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '编辑项目' if action == 'edit' else '新增项目' }} - {{ config.APP_NAME }}{% endblock %}
+
+{% block header %}{{ '编辑项目' if action == 'edit' else '新增项目' }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                <i class="bi bi-house me-1"></i>首页
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('project.list') }}" class="text-decoration-none">
+                <i class="bi bi-building me-1"></i>项目管理
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-{{ 'pencil' if action == 'edit' else 'plus' }} me-1"></i>{{ '编辑项目' if action == 'edit' else '新增项目' }}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<form method="POST" class="needs-validation" novalidate>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+        <!-- 基础信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">基础信息</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="project_name" class="form-label">项目名称 *</label>
+                            <input type="text" class="form-control" id="project_name" name="project_name"
+                                   value="{{ project.project_name if project else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="project_type" class="form-label">项目类型</label>
+                            <input type="text" class="form-control" id="project_type" name="project_type"
+                                   value="{{ project.project_type if project else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="legal_entity" class="form-label">法人机构/单位名称</label>
+                            <input type="text" class="form-control" id="legal_entity" name="legal_entity"
+                                   value="{{ project.legal_entity if project else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="contact_person" class="form-label">联系人</label>
+                            <input type="text" class="form-control" id="contact_person" name="contact_person"
+                                   value="{{ project.contact_person if project else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="contact_phone" class="form-label">联系电话</label>
+                            <input type="text" class="form-control" id="contact_phone" name="contact_phone"
+                                   value="{{ project.contact_phone if project else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 位置信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">位置信息</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="location" class="form-label">所在位置</label>
+                            <input type="text" class="form-control" id="location" name="location"
+                                   value="{{ project.location if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="func_zone" class="form-label">所在功能区</label>
+                            <select class="form-select" id="func_zone" name="func_zone">
+                                <option value="">请选择</option>
+                                <option value="一级保护区" {% if project and project.func_zone == '一级保护区' %}selected{% endif %}>一级保护区</option>
+                                <option value="二级保护区" {% if project and project.func_zone == '二级保护区' %}selected{% endif %}>二级保护区</option>
+                                <option value="三级保护区" {% if project and project.func_zone == '三级保护区' %}selected{% endif %}>三级保护区</option>
+                                <option value="旅游服务区" {% if project and project.func_zone == '旅游服务区' %}selected{% endif %}>旅游服务区</option>
+                                <option value="居民保留区" {% if project and project.func_zone == '居民保留区' %}selected{% endif %}>居民保留区</option>
+                                <option value="自然生态区" {% if project and project.func_zone == '自然生态区' %}selected{% endif %}>自然生态区</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="area" class="form-label">占地面积(㎡)</label>
+                            <input type="number" class="form-control" id="area" name="area" step="0.01"
+                                   value="{{ project.area if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="longitude" class="form-label">经度</label>
+                            <input type="number" class="form-control" id="longitude" name="longitude" step="0.000001"
+                                   value="{{ project.longitude if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="latitude" class="form-label">纬度</label>
+                            <input type="number" class="form-control" id="latitude" name="latitude" step="0.000001"
+                                   value="{{ project.latitude if project else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 审批信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">审批信息</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="approval_status" class="form-label">审批状态</label>
+                            <select class="form-select" id="approval_status" name="approval_status">
+                                <option value="">请选择</option>
+                                {% for status in approval_statuses %}
+                                <option value="{{ status[0] }}" {% if project and project.approval_status == status[0] %}selected{% endif %}>{{ status[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="approval_stage" class="form-label">当前审批阶段</label>
+                            <input type="text" class="form-control" id="approval_stage" name="approval_stage"
+                                   value="{{ project.approval_stage if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="approval_start_date" class="form-label">开始审批日期</label>
+                            <input type="date" class="form-control" id="approval_start_date" name="approval_start_date"
+                                   value="{{ project.approval_start_date if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="approval_end_date" class="form-label">审批完成日期</label>
+                            <input type="date" class="form-control" id="approval_end_date" name="approval_end_date"
+                                   value="{{ project.approval_end_date if project else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目状态 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">项目状态</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="project_status" class="form-label">项目状态</label>
+                            <select class="form-select" id="project_status" name="project_status">
+                                <option value="">请选择</option>
+                                {% for status in project_statuses %}
+                                <option value="{{ status[0] }}" {% if project and project.project_status == status[0] %}selected{% endif %}>{{ status[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">计划开工日期</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date"
+                                   value="{{ project.start_date if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">计划完工日期</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date"
+                                   value="{{ project.end_date if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="actual_start_date" class="form-label">实际开工日期</label>
+                            <input type="date" class="form-control" id="actual_start_date" name="actual_start_date"
+                                   value="{{ project.actual_start_date if project else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="actual_end_date" class="form-label">实际完工日期</label>
+                            <input type="date" class="form-control" id="actual_end_date" name="actual_end_date"
+                                   value="{{ project.actual_end_date if project else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 描述和备注 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">其他信息</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="description" class="form-label">项目描述</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ project.description if project else '' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="remark" class="form-label">备注</label>
+                            <textarea class="form-control" id="remark" name="remark" rows="2">{{ project.remark if project else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="col-12">
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ url_for('project.list') }}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

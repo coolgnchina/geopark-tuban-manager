@@ -7,7 +7,7 @@ from flask import (
     url_for,
     flash,
     current_app,
-    send_from_directory,
+    send_file,
     abort,
     session,
 )
@@ -24,6 +24,8 @@ from utils.helpers import (
     calculate_overdue_status,
     get_overdue_days,
     allowed_file,
+    sanitize_filename,
+    safe_join_upload,
 )
 from utils.excel_handler import import_tubans_from_excel, export_tubans_to_excel
 import os
@@ -210,7 +212,7 @@ def add():
             # 处理附件上传
             if "attachment_file" in request.files:
                 file = request.files["attachment_file"]
-                if file and file.filename != "":
+                if file and file.filename:
                     # 检查文件类型
                     allowed_extensions = {
                         "pdf",
@@ -224,9 +226,13 @@ def add():
                         "zip",
                         "rar",
                     }
-                    if allowed_file(file.filename, allowed_extensions):
+                    safe_name = sanitize_filename(file.filename)
+                    if not safe_name:
+                        flash("附件文件名无效", "warning")
+                        tuban.attachments = request.form.get("attachments")
+                    elif allowed_file(safe_name, allowed_extensions):
                         # 生成唯一文件名
-                        filename = f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+                        filename = f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_name}"
                         filepath = os.path.join(
                             current_app.config["UPLOAD_FOLDER"], filename
                         )
@@ -244,9 +250,7 @@ def add():
                             "附件格式不支持，请上传PDF、Word、图片或压缩包文件",
                             "warning",
                         )
-                        tuban.attachments = request.form.get(
-                            "attachments"
-                        )  # 保持原有值
+                        tuban.attachments = request.form.get("attachments")
                 else:
                     tuban.attachments = request.form.get("attachments")
             else:
@@ -357,7 +361,7 @@ def edit(id):
             # 处理附件上传
             if "attachment_file" in request.files:
                 file = request.files["attachment_file"]
-                if file and file.filename != "":
+                if file and file.filename:
                     # 检查文件类型
                     allowed_extensions = {
                         "pdf",
@@ -371,9 +375,13 @@ def edit(id):
                         "zip",
                         "rar",
                     }
-                    if allowed_file(file.filename, allowed_extensions):
+                    safe_name = sanitize_filename(file.filename)
+                    if not safe_name:
+                        flash("附件文件名无效", "warning")
+                        tuban.attachments = request.form.get("attachments")
+                    elif allowed_file(safe_name, allowed_extensions):
                         # 生成唯一文件名
-                        filename = f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+                        filename = f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_name}"
                         filepath = os.path.join(
                             current_app.config["UPLOAD_FOLDER"], filename
                         )
@@ -391,9 +399,7 @@ def edit(id):
                             "附件格式不支持，请上传PDF、Word、图片或压缩包文件",
                             "warning",
                         )
-                        tuban.attachments = request.form.get(
-                            "attachments"
-                        )  # 保持原有值
+                        tuban.attachments = request.form.get("attachments")
                 else:
                     tuban.attachments = request.form.get("attachments")
             else:
@@ -472,13 +478,12 @@ def add_rectify_record(id):
     tuban = Tuban.query.get_or_404(id)
 
     try:
-        record = RectifyRecord(
-            tuban_id=id,
-            status=request.form.get("status"),
-            content=request.form.get("content"),
-            operator=request.form.get("operator"),
-            record_time=datetime.now(),
-        )
+        record = RectifyRecord()
+        record.tuban_id = id
+        record.status = request.form.get("status")
+        record.content = request.form.get("content")
+        record.operator = request.form.get("operator")
+        record.record_time = datetime.now()
 
         # 如果状态是"已整改"，更新图斑的整改状态
         if request.form.get("status") == "已整改":
@@ -543,47 +548,58 @@ def import_excel():
         return redirect(url_for("tuban.list"))
 
     file = request.files["file"]
-    if file.filename == "":
-        flash("请选择文件", "error")
+    if not file.filename:
+        flash("没有选择文件", "error")
         return redirect(url_for("tuban.list"))
 
-    if file and allowed_file(
-        file.filename, current_app.config["EXCEL_ALLOWED_EXTENSIONS"]
-    ):
-        try:
-            # 保存上传的文件
-            filename = f"import_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-            filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-            file.save(filepath)
+    safe_name = sanitize_filename(file.filename)
+    if not safe_name:
+        flash("文件名无效", "error")
+        return redirect(url_for("tuban.list"))
 
-            # 导入数据
-            count = import_tubans_from_excel(filepath)
+    allowed_extensions = current_app.config.get(
+        "EXCEL_ALLOWED_EXTENSIONS", {"xlsx", "xls"}
+    )
+    if not allowed_file(safe_name, allowed_extensions):
+        flash("只支持Excel文件（.xlsx/.xls）", "error")
+        return redirect(url_for("tuban.list"))
 
-            flash(f"成功导入 {count} 条图斑数据！", "success")
+    filepath = None
+    try:
+        os.makedirs(current_app.config["UPLOAD_FOLDER"], exist_ok=True)
+        temp_name = f"import_{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_name}"
+        filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], temp_name)
+        file.save(filepath)
 
-            # 删除临时文件
-            os.remove(filepath)
-
-        except Exception as e:
-            flash(f"导入失败：{str(e)}", "error")
-    else:
-        flash("文件格式不正确，请上传Excel文件", "error")
+        count = import_tubans_from_excel(filepath)
+        flash(f"导入完成：成功导入 {count} 条记录", "success")
+    except Exception as e:
+        flash(f"导入失败：{str(e)}", "error")
+    finally:
+        if filepath and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
 
     return redirect(url_for("tuban.list"))
 
 
 @tuban_bp.route("/upload_attachment", methods=["POST"])
 def upload_attachment():
-    """AJAX上传附件"""
+    """上传附件"""
     if "file" not in request.files:
-        return jsonify({"success": False, "message": "没有文件"})
-
-    file = request.files["file"]
-    if file.filename == "":
         return jsonify({"success": False, "message": "没有选择文件"})
 
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"success": False, "message": "没有选择文件"})
+
+    safe_name = sanitize_filename(file.filename)
+    if not safe_name:
+        return jsonify({"success": False, "message": "文件名无效"})
+
     try:
-        # 检查文件类型
         allowed_extensions = {
             "pdf",
             "doc",
@@ -596,10 +612,9 @@ def upload_attachment():
             "zip",
             "rar",
         }
-        if not allowed_file(file.filename, allowed_extensions):
+        if not allowed_file(safe_name, allowed_extensions):
             return jsonify({"success": False, "message": "文件格式不支持"})
 
-        # 检查文件大小
         file.seek(0, os.SEEK_END)
         file_size = file.tell()
         file.seek(0)
@@ -607,16 +622,10 @@ def upload_attachment():
         if file_size > current_app.config["MAX_CONTENT_LENGTH"]:
             return jsonify({"success": False, "message": "文件大小超过16MB限制"})
 
-        # 生成唯一文件名
-        filename = (
-            f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
-        )
+        filename = f"attachment_{datetime.now().strftime('%Y%m%d%H%M%S')}_{safe_name}"
         filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
 
-        # 确保上传目录存在
         os.makedirs(current_app.config["UPLOAD_FOLDER"], exist_ok=True)
-
-        # 保存文件
         file.save(filepath)
 
         return jsonify({"success": True, "filename": filename})
@@ -629,24 +638,11 @@ def upload_attachment():
 def download_attachment(filename):
     """下载附件"""
     try:
-        # 安全检查：防止路径遍历攻击
-        if ".." in filename or filename.startswith("/"):
+        safe_path = safe_join_upload(current_app.config["UPLOAD_FOLDER"], filename)
+        if not safe_path or not safe_path.exists():
             abort(404)
 
-        # 构建完整路径
-        file_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-
-        # 检查文件是否存在
-        if not os.path.exists(file_path):
-            abort(404)
-
-        # 发送文件
-        return send_from_directory(
-            current_app.config["UPLOAD_FOLDER"],
-            filename,
-            as_attachment=True,
-            download_name=filename,
-        )
+        return send_file(safe_path, as_attachment=True, download_name=safe_path.name)
     except Exception as e:
         flash(f"下载失败：{str(e)}", "error")
         return redirect(url_for("tuban.list"))
@@ -689,8 +685,12 @@ def upload_image(id):
         return jsonify({"success": False, "message": "没有选择文件"})
 
     file = request.files["file"]
-    if file.filename == "":
+    if not file.filename:
         return jsonify({"success": False, "message": "没有选择文件"})
+
+    safe_name = sanitize_filename(file.filename)
+    if not safe_name:
+        return jsonify({"success": False, "message": "文件名无效"})
 
     # 获取图片类型
     image_type = request.form.get("image_type", "photo")
@@ -700,7 +700,7 @@ def upload_image(id):
     try:
         # 检查文件类型
         allowed_extensions = {"jpg", "jpeg", "png", "gif", "bmp", "webp"}
-        if not allowed_file(file.filename, allowed_extensions):
+        if not allowed_file(safe_name, allowed_extensions):
             return jsonify(
                 {"success": False, "message": "只支持图片格式(JPG/PNG/GIF/BMP/WEBP)"}
             )
@@ -715,7 +715,7 @@ def upload_image(id):
             return jsonify({"success": False, "message": "图片大小不能超过5MB"})
 
         # 生成唯一文件名
-        ext = file.filename.rsplit(".", 1)[1].lower()
+        ext = safe_name.rsplit(".", 1)[1].lower()
         unique_filename = f"{image_type}_{id}_{uuid.uuid4().hex[:8]}.{ext}"
 
         # 创建图片目录
@@ -727,15 +727,14 @@ def upload_image(id):
         file.save(filepath)
 
         # 保存到数据库
-        image = TubanImage(
-            tuban_id=id,
-            image_type=image_type,
-            filename=unique_filename,
-            original_name=file.filename,
-            description=request.form.get("description", ""),
-            file_size=file_size,
-            uploaded_by=session.get("username", "unknown"),
-        )
+        image = TubanImage()
+        image.tuban_id = id
+        image.image_type = image_type
+        image.filename = unique_filename
+        image.original_name = safe_name
+        image.description = request.form.get("description", "")
+        image.file_size = file_size
+        image.uploaded_by = session.get("username", "unknown")
         db.session.add(image)
         db.session.commit()
 
@@ -774,12 +773,12 @@ def delete_image(image_id):
 def serve_image(filename):
     """提供图片访问"""
     try:
-        # 安全检查
-        if ".." in filename or filename.startswith("/"):
+        relative_path = os.path.join("images", filename)
+        safe_path = safe_join_upload(current_app.config["UPLOAD_FOLDER"], relative_path)
+        if not safe_path or not safe_path.exists():
             abort(404)
 
-        images_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "images")
-        return send_from_directory(images_folder, filename)
+        return send_file(safe_path, as_attachment=False)
 
     except Exception:
         abort(404)

@@ -3,11 +3,12 @@
 提供图斑地图可视化功能，集成天地图
 """
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, current_app
 from models import db
 from models.tuban import Tuban
 from models.event import Event
 from models.tuban_event import tuban_events
+from utils.helpers import cache_get, cache_set
 
 map_bp = Blueprint("map", __name__)
 
@@ -64,26 +65,37 @@ def api_tubans():
     - rectify_status: 整改状态
     - event_id: 事件ID
     """
+    func_zone = request.args.get("func_zone")
+    problem_type = request.args.get("problem_type")
+    rectify_status = request.args.get("rectify_status")
+    event_id = request.args.get("event_id")
+
+    cache_key = "map:tubans:{}:{}:{}:{}".format(
+        func_zone or "",
+        problem_type or "",
+        rectify_status or "",
+        event_id or "",
+    )
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return jsonify(cached)
+
     # 构建查询
     query = Tuban.query.filter(
         Tuban.is_deleted == 0, Tuban.longitude.isnot(None), Tuban.latitude.isnot(None)
     )
 
     # 应用筛选条件
-    func_zone = request.args.get("func_zone")
     if func_zone:
         query = query.filter(Tuban.func_zone == func_zone)
 
-    problem_type = request.args.get("problem_type")
     if problem_type:
         query = query.filter(Tuban.problem_type == problem_type)
 
-    rectify_status = request.args.get("rectify_status")
     if rectify_status:
         query = query.filter(Tuban.rectify_status == rectify_status)
 
     # 事件筛选
-    event_id = request.args.get("event_id")
     if event_id:
         query = query.join(tuban_events).filter(
             tuban_events.c.event_id == int(event_id)
@@ -134,14 +146,23 @@ def api_tubans():
         }
         features.append(feature)
 
-    return jsonify(
-        {"type": "FeatureCollection", "features": features, "total": len(features)}
-    )
+    payload = {
+        "type": "FeatureCollection",
+        "features": features,
+        "total": len(features),
+    }
+    cache_set(cache_key, payload, current_app.config["MAP_CACHE_TTL"])
+    return jsonify(payload)
 
 
 @map_bp.route("/api/stats")
 def api_stats():
     """获取地图统计数据"""
+    cache_key = "map:stats"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return jsonify(cached)
+
     # 统计各状态数量
     total = Tuban.query.filter(
         Tuban.is_deleted == 0, Tuban.longitude.isnot(None), Tuban.latitude.isnot(None)
@@ -163,11 +184,11 @@ def api_stats():
         Tuban.is_deleted == 0, Tuban.longitude.isnot(None), Tuban.is_closed == "是"
     ).count()
 
-    return jsonify(
-        {
-            "total": total,
-            "pending": pending,
-            "in_progress": in_progress,
-            "closed": closed,
-        }
-    )
+    payload = {
+        "total": total,
+        "pending": pending,
+        "in_progress": in_progress,
+        "closed": closed,
+    }
+    cache_set(cache_key, payload, current_app.config["MAP_CACHE_TTL"])
+    return jsonify(payload)

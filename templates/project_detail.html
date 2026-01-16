@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.project_name }} - 项目详情{% endblock %}
+
+{% block header %}项目管理{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="ms-2">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('project.list') }}">项目管理</a></li>
+        <li class="breadcrumb-item active">{{ project.project_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<style>
+#projectTabs .nav-link {
+    color: #495057; /* Dark gray text for better contrast */
+    background-color: #f8f9fa; /* Light background */
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+}
+#projectTabs .nav-link:hover {
+    color: #0d6efd;
+    background-color: #fff;
+}
+#projectTabs .nav-link.active {
+    color: #0d6efd;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+</style>
+<div class="container-fluid px-3">
+    <!-- 项目基本信息卡片 -->
+    <div class="card mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-building me-2"></i>{{ project.project_name }}
+            </h5>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('project.edit', id=project.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil me-1"></i>编辑
+                </a>
+                <a href="{{ url_for('project.manage_tubans', id=project.id) }}" class="btn btn-outline-info btn-sm">
+                    <i class="bi bi-link me-1"></i>关联图斑
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- 基本信息 -->
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">项目类型</label>
+                        <div class="fw-bold">{{ project.project_type or '未分类' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">法人机构</label>
+                        <div>{{ project.legal_entity or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">联系人</label>
+                        <div>{{ project.contact_person or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">联系电话</label>
+                        <div>{{ project.contact_phone or '-' }}</div>
+                    </div>
+                </div>
+                <!-- 位置信息 -->
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">所在位置</label>
+                        <div>{{ project.location or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">所在功能区</label>
+                        <div>{{ project.func_zone or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">占地面积</label>
+                        <div>{{ project.area or '-' }} ㎡</div>
+                    </div>
+                </div>
+                <!-- 审批状态 -->
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">审批状态</label>
+                        <div>
+                            {% if project.approval_status == '已审批' %}
+                            <span class="badge bg-success">{{ project.approval_status }}</span>
+                            {% elif '审批中' in project.approval_status %}
+                            <span class="badge bg-warning">{{ project.approval_status }}</span>
+                            {% elif project.approval_status == '未审批' %}
+                            <span class="badge bg-danger">{{ project.approval_status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ project.approval_status or '-' }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- 项目状态 -->
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">项目状态</label>
+                        <div>
+                            {% if project.project_status == '已完工' %}
+                            <span class="badge bg-success">{{ project.project_status }}</span>
+                            {% elif project.project_status == '在建' %}
+                            <span class="badge bg-warning">{{ project.project_status }}</span>
+                            {% elif project.project_status == '筹备' %}
+                            <span class="badge bg-info">{{ project.project_status }}</span>
+                            {% elif project.project_status == '停工' %}
+                            <span class="badge bg-danger">{{ project.project_status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ project.project_status or '-' }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- 时间信息 -->
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">计划开工日期</label>
+                        <div>{{ project.start_date or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="detail-item">
+                        <label class="text-muted small">计划完工日期</label>
+                        <div>{{ project.end_date or '-' }}</div>
+                    </div>
+                </div>
+                <!-- 描述和备注 -->
+                <div class="col-12">
+                    <div class="detail-item">
+                        <label class="text-muted small">项目描述</label>
+                        <div>{{ project.description or '-' }}</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="detail-item">
+                        <label class="text-muted small">备注</label>
+                        <div>{{ project.remark or '-' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标签页导航 -->
+    <ul class="nav nav-tabs mb-3" id="projectTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button">
+                <i class="bi bi-clock-history me-1"></i>公文时间线
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button">
+                <i class="bi bi-file-earmark-text me-1"></i>文档管理
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tubans-tab" data-bs-toggle="tab" data-bs-target="#tubans" type="button">
+                <i class="bi bi-geo-alt me-1"></i>关联图斑
+                <span class="badge bg-primary ms-1">{{ linked_tubans|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- 标签页内容 -->
+    <div class="tab-content" id="projectTabsContent">
+        <!-- 公文时间线 -->
+        <div class="tab-pane fade show active" id="timeline" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>公文时间线</h6>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTimelineModal">
+                            <i class="bi bi-plus-circle me-1"></i>添加公文
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if timelines %}
+                    <div class="timeline">
+                        {% for timeline in timelines %}
+                        <div class="timeline-item mb-3 pb-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-{% if timeline.event_type == '停工通知' %}danger{% elif timeline.event_type == '批复' %}success{% elif timeline.event_type == '征求意见' %}warning{% else %}info{% endif %}">
+                                            {{ timeline.event_type }}
+                                        </span>
+                                        <span class="fw-bold">{{ timeline.event_title }}</span>
+                                    </div>
+                                    <div class="text-muted small mb-2">
+                                        <i class="bi bi-calendar me-1"></i>{{ timeline.event_date }}
+                                        {% if timeline.opposite_party %}
+                                        <span class="ms-3"><i class="bi bi-building me-1"></i>收文单位：{{ timeline.opposite_party }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-2">{{ timeline.content }}</div>
+                                    {% if timeline.ai_summary %}
+                                    <div class="alert alert-light border mb-2">
+                                        <div class="small text-muted mb-1"><i class="bi bi-robot me-1"></i>AI摘要</div>
+                                        <div class="mb-0">{{ timeline.ai_summary }}</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if timeline.attachments %}
+                                    <div class="mt-2">
+                                        {% set att_list = timeline.attachments|json_parse %}
+                                        {% if att_list %}
+                                            {% for att in att_list %}
+                                            <a href="{{ url_for('serve_upload', filename=att) }}" 
+                                               class="btn btn-outline-secondary btn-sm me-1 mb-1" target="_blank">
+                                                <i class="bi bi-paperclip me-1"></i>附件{{ loop.index }}
+                                            </a>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex gap-1">
+                                    {% if timeline.ai_summary_status != 'success' %}
+                                    <form action="{{ url_for('project.regenerate_summary', id=timeline.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm" title="生成AI摘要">
+                                            <i class="bi bi-robot"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="{{ url_for('project.delete_timeline', id=timeline.id) }}" method="POST" 
+                                          class="d-inline" onsubmit="return confirm('确定要删除这条记录吗？');">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="删除">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">暂无公文记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 文档管理 -->
+        <div class="tab-pane fade" id="documents" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>文档管理</h6>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                            <i class="bi bi-plus-circle me-1"></i>上传文档
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>文档类型</th>
+                                <th>文档标题</th>
+                                <th>文档日期</th>
+                                <th>提取方式</th>
+                                <th>AI摘要</th>
+                                <th style="width: 100px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ doc.doc_type }}</span></td>
+                                <td>{{ doc.doc_title }}</td>
+                                <td>{{ doc.doc_date or '-' }}</td>
+                                <td>
+                                    {% if doc.ai_summary_status == 'success' %}
+                                    <span class="badge bg-success">已提取</span>
+                                    {% elif doc.ai_summary_status == 'failed' %}
+                                    <span class="badge bg-danger">提取失败</span>
+                                    {% elif doc.ai_summary_status == 'pending' %}
+                                    <span class="badge bg-warning">待处理</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if doc.ai_summary %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>有摘要</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        {% if doc.doc_file %}
+                                        <a href="{{ url_for('serve_upload', filename=doc.doc_file) }}" 
+                                           class="btn btn-outline-primary btn-sm" target="_blank" title="查看">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                        <form action="{{ url_for('project.delete_document', id=doc.id) }}" method="POST" 
+                                              class="d-inline" onsubmit="return confirm('确定要删除吗？');">
+                                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="删除">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-folder2-open" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">暂无文档</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 关联图斑 -->
+        <div class="tab-pane fade" id="tubans" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>关联图斑</h6>
+                        <a href="{{ url_for('project.manage_tubans', id=project.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>管理关联
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if linked_tubans %}
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>图斑编号</th>
+                                <th>设施名称</th>
+                                <th>所在公园</th>
+                                <th>功能区</th>
+                                <th>问题类型</th>
+                                <th>整改进展</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tuban in linked_tubans %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="fw-bold text-primary">
+                                        {{ tuban.tuban_code }}
+                                    </a>
+                                </td>
+                                <td>{{ tuban.facility_name or '-' }}</td>
+                                <td>{{ tuban.park_name or '-' }}</td>
+                                <td>{{ tuban.func_zone or '-' }}</td>
+                                <td><span class="badge bg-secondary">{{ tuban.problem_type or '-' }}</span></td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if tuban.rectify_status == '已整改' else 'warning' if tuban.rectify_status == '整改中' else 'danger' }}">
+                                        {{ tuban.rectify_status or '未整改' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('tuban.detail', id=tuban.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-geo" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">暂无关联图斑</p>
+                        <a href="{{ url_for('project.manage_tubans', id=project.id) }}" class="btn btn-primary btn-sm mt-2">
+                            <i class="bi bi-plus-circle me-1"></i>添加关联
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加公文模态框 -->
+<div class="modal fade" id="addTimelineModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>添加公文记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('project.add_timeline', id=project.id) }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">公文类型 <span class="text-danger">*</span></label>
+                            <select name="event_type" class="form-select" required>
+                                <option value="">请选择</option>
+                                {% for event in timeline_events %}
+                                <option value="{{ event[0] }}">{{ event[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">公文日期 <span class="text-danger">*</span></label>
+                            <input type="date" name="event_date" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">公文标题 <span class="text-danger">*</span></label>
+                            <input type="text" name="event_title" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">收文单位</label>
+                            <input type="text" name="opposite_party" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">记录人</label>
+                            <input type="text" name="created_by" class="form-control" value="管理员">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">详细内容</label>
+                            <textarea name="content" class="form-control" rows="5" placeholder="如不上传附件，请在此填写公文内容；如上传附件，将自动从附件提取内容"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">附件（可多选）</label>
+                            <input type="file" name="attachments" class="form-control" multiple accept=".pdf,.doc,.docx,.txt,.md,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 上传文档模态框 -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>上传文档</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('project.add_document', id=project.id) }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">文档类型 <span class="text-danger">*</span></label>
+                            <select name="doc_type" class="form-select" required>
+                                <option value="">请选择</option>
+                                {% for doc_type in document_types %}
+                                <option value="{{ doc_type[0] }}">{{ doc_type[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">文档日期</label>
+                            <input type="date" name="doc_date" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">文档标题 <span class="text-danger">*</span></label>
+                            <input type="text" name="doc_title" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">文档描述</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">文件 <span class="text-danger">*</span></label>
+                            <input type="file" name="doc_file" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">上传</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
